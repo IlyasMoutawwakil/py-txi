@@ -1,1 +1,2 @@
-from .model import TGIModel
+from .server import TGIServer
+from .client import LLMClient
