@@ -1,2 +1,2 @@
 from .server import TGIServer
-from .client import LLMClient
+from .client import BatchedInferenceClient

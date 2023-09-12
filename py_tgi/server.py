@@ -8,7 +8,7 @@ import docker
 import docker.errors
 import docker.types
 
-from .client import LLMClient
+from huggingface_hub import InferenceClient
 
 basicConfig(level=INFO)
 LOGGER = getLogger("tgi-server")
@@ -127,9 +127,9 @@ class TGIServer:
 
         while True:
             try:
-                test_client = LLMClient(url=self.url)
-                test_client.generate("Hello")
-                del test_client
+                dummy_client = InferenceClient(model=self.url)
+                dummy_client.text_generation("Hello world!")
+                del dummy_client
                 break
             except Exception:
                 LOGGER.info("\t+ Couldn't connect to TGI server")

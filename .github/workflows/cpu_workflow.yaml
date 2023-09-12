@@ -1,4 +1,4 @@
-name: CPU Unit Tests
+name: CPU Test
 
 on:
   push:
@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  run_cpu_tests:
+  cpu_test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -22,10 +22,10 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Install CPU requirements
+      - name: Install requirements
         run: |
           pip install --upgrade pip
           pip install -e .
 
-      - name: Run CPU tests
+      - name: Run sanity check
         run: python sanity_test.py
