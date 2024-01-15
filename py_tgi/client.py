@@ -22,7 +22,7 @@ class BatchedInferenceClient:
             return self.tgi_client.text_generation(prompt=prompt, **kwargs)
 
         elif isinstance(prompt, list):
-            with ThreadPoolExecutor(max_workers=len(input["prompt"])) as executor:
+            with ThreadPoolExecutor(max_workers=len(prompt)) as executor:
                 futures = [
                     executor.submit(
                         self.tgi_client.text_generation, prompt=prompt[i], **kwargs
@@ -31,6 +31,6 @@ class BatchedInferenceClient:
                 ]
 
             output = []
-            for i in range(len(input["prompt"])):
+            for i in range(len(prompt)):
                 output.append(futures[i].result())
             return output
