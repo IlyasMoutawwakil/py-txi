@@ -28,8 +28,4 @@ finally:
     llm.close()
 ```
 
-Output:
-
-```bash
 Output: [".\n\nHi, I'm an example 2.\n\nHi, I'm", ".\n\nI'm a simple example of a class that has a method that returns a value"]
-```

@@ -25,7 +25,7 @@ common_setup_kwargs = {
 
 setup(
     name="py-tgi",
-    version=PY_TGI_VERSION,
     packages=find_packages(),
+    version="{{VERSION_PLACEHOLDER}}",
     install_requires=["docker", "huggingface-hub"],
 )

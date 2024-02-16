@@ -6,9 +6,14 @@ on:
       - "v*"
 
 jobs:
-  build-n-publish:
-    name: Build and publish Python
+  build_and_publish:
+    name: Upload release to PyPI
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/<your-pypi-project-name>
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@master
 
@@ -35,7 +40,8 @@ jobs:
         run: |
           python setup.py sdist bdist_wheel
 
-      - name: Publish distribution 📦 to PyPI
+      - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
+          username: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
