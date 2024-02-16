@@ -17,7 +17,7 @@ Running a TGI server with a batched inference client:
 # basicConfig(level=INFO)
 from py_tgi import TGI
 
-llm = TGI(model="TheBloke/Mistral-7B-Instruct-v0.1-AWQ", quantization="awq")
+llm = TGI(model="TheBloke/Mistral-7B-Instruct-v0.1-AWQ", quantize="awq")
 
 try:
     output = llm.generate(["Hi, I'm an example 1", "Hi, I'm an example 2"])

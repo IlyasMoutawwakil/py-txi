@@ -4,7 +4,5 @@ setup(
     name="py-tgi",
     version="0.1",
     packages=find_packages(),
-    install_requires=[
-        "docker" "huggingface-hub",
-    ],
+    install_requires=["docker", "huggingface-hub"],
 )
