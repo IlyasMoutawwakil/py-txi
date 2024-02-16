@@ -1,18 +1,16 @@
 import os
 import time
-import subprocess
 from logging import getLogger
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Literal, List, Union
-from contextlib import contextmanager
-import signal
-
 
 import docker
 import docker.types
 import docker.errors
 from huggingface_hub import InferenceClient
 from huggingface_hub.inference._text_generation import TextGenerationResponse
+
+from .utils import get_nvidia_gpu_devices, timeout
 
 LOGGER = getLogger("tgi")
 HF_CACHE_DIR = f"{os.path.expanduser('~')}/.cache/huggingface/hub"
@@ -39,7 +37,7 @@ class TGI:
         sharded: Optional[bool] = None,
         num_shard: Optional[int] = None,
         torch_dtype: Optional[Torch_Dtype_Literal] = None,
-        quantization: Optional[Quantization_Literal] = None,
+        quantize: Optional[Quantization_Literal] = None,
         trust_remote_code: Optional[bool] = False,
         disable_custom_kernels: Optional[bool] = False,
     ) -> None:
@@ -58,7 +56,7 @@ class TGI:
         self.sharded = sharded
         self.num_shard = num_shard
         self.torch_dtype = torch_dtype
-        self.quantization = quantization
+        self.quantize = quantize
         self.trust_remote_code = trust_remote_code
         self.disable_custom_kernels = disable_custom_kernels
 
@@ -74,17 +72,22 @@ class TGI:
             )
             self.docker_client.images.pull(f"{self.image}:{self.version}")
 
+        env = {}
+        if os.environ.get("HUGGING_FACE_HUB_TOKEN", None) is not None:
+            env["HUGGING_FACE_HUB_TOKEN"] = os.environ["HUGGING_FACE_HUB_TOKEN"]
+
         LOGGER.info("\t+ Building TGI command")
         self.command = ["--model-id", self.model, "--revision", self.revision]
 
-        if self.torch_dtype is not None:
-            self.command.extend(["--torch-dtype", self.torch_dtype])
-        if self.quantization is not None:
-            self.command.extend(["--quantize", self.quantization])
         if self.sharded is not None:
             self.command.extend(["--sharded", str(self.sharded).lower()])
         if self.num_shard is not None:
             self.command.extend(["--num-shard", str(self.num_shard)])
+        if self.quantize is not None:
+            self.command.extend(["--quantize", self.quantize])
+        if self.torch_dtype is not None:
+            self.command.extend(["--dtype", self.torch_dtype])
+
         if self.trust_remote_code:
             self.command.append("--trust-remote-code")
         if self.disable_custom_kernels:
@@ -93,23 +96,16 @@ class TGI:
         try:
             LOGGER.info("\t+ Checking if GPU is available")
             if os.environ.get("CUDA_VISIBLE_DEVICES") is not None:
-                LOGGER.info(
-                    "\t+ `CUDA_VISIBLE_DEVICES` is set, using the specified GPU(s)"
-                )
+                LOGGER.info("\t+ Using specified `CUDA_VISIBLE_DEVICES` to set GPU(s)")
                 device_ids = os.environ.get("CUDA_VISIBLE_DEVICES")
             else:
-                LOGGER.info(
-                    "\t+ `CUDA_VISIBLE_DEVICES` is not set, using nvidia-smi to detect GPU(s)"
-                )
-                device_ids = ",".join([str(device) for device in get_gpu_devices()])
-                LOGGER.info("\t+ Using GPU(s) from nvidia-smi")
+                LOGGER.info("\t+ Using nvidia-smi to get available GPU(s) (if any)")
+                device_ids = get_nvidia_gpu_devices()
 
             LOGGER.info(f"\t+ Using GPU(s): {device_ids}")
             self.device_requests = [
                 docker.types.DeviceRequest(
-                    driver="nvidia",
-                    device_ids=[str(device_ids)],
-                    capabilities=[["gpu"]],
+                    device_ids=[device_ids], capabilities=[["gpu"]]
                 )
             ]
         except Exception:
@@ -117,12 +113,13 @@ class TGI:
             self.device_requests = None
 
         self.tgi_container = self.docker_client.containers.run(
-            image=f"{self.image}:{self.version}",
             command=self.command,
-            shm_size=self.shm_size,
+            image=f"{self.image}:{self.version}",
             volumes={self.volume: {"bind": "/data", "mode": "rw"}},
             ports={"80/tcp": (self.address, self.port)},
             device_requests=self.device_requests,
+            shm_size=self.shm_size,
+            environment=env,
             detach=True,
         )
 
@@ -185,47 +182,3 @@ class TGI:
             for i in range(len(prompt)):
                 output.append(futures[i].result())
             return output
-
-
-def get_gpu_devices():
-    nvidia_smi = (
-        subprocess.check_output(
-            [
-                "nvidia-smi",
-                "--query-gpu=index,gpu_name,compute_cap",
-                "--format=csv",
-            ],
-        )
-        .decode("utf-8")
-        .strip()
-        .split("\n")[1:]
-    )
-    device = [
-        {
-            "id": int(gpu.split(", ")[0]),
-            "name": gpu.split(", ")[1],
-            "compute_cap": gpu.split(", ")[2],
-        }
-        for gpu in nvidia_smi
-    ]
-    device_ids = [gpu["id"] for gpu in device if "Display" not in gpu["name"]]
-
-    return device_ids
-
-
-@contextmanager
-def timeout(time: int):
-    """
-    Timeout context manager. Raises TimeoutError if the code inside the context manager takes longer than `time` seconds to execute.
-    """
-
-    def signal_handler(signum, frame):
-        raise TimeoutError("Timed out")
-
-    signal.signal(signal.SIGALRM, signal_handler)
-    signal.alarm(time)
-
-    try:
-        yield
-    finally:
-        signal.alarm(0)

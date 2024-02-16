@@ -3,7 +3,7 @@ from py_tgi import TGI
 
 basicConfig(level=INFO) # to stream tgi container logs
 
-llm = TGI(model="TheBloke/Mistral-7B-Instruct-v0.1-AWQ", quantization="awq")
+llm = TGI(model="TheBloke/Mistral-7B-Instruct-v0.1-AWQ", quantize="awq")
 
 try:
     output = llm.generate(["Hi, I'm an example 1", "Hi, I'm an example 2"])
