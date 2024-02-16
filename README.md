@@ -1,11 +1,11 @@
 # py-tgi
 
-This presents a Python wrapper for the using `docker-py` to manage a TGI server and a client for single and batched inference.
+Py-TGI is a Python wrapper around [TGI](https://github.com/huggingface/text-generation-inference) to enable creating and running TGI servers and clients in a similar style to vLLM
 
 ## Installation
 
 ```bash
-python -m pip install git+https://github.com/IlyasMoutawwakil/py-tgi.git
+pip install py-tgi
 ```
 
 ## Usage
