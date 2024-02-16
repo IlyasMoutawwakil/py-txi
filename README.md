@@ -1,4 +1,4 @@
-# py-tgi
+# Py-TGI
 
 Py-TGI is a Python wrapper around [TGI](https://github.com/huggingface/text-generation-inference) to enable creating and running TGI servers and clients in a similar style to vLLM
 
