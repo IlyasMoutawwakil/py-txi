@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
         with:
-          python-version: 3.8
+          python-version: '3.10'
 
       - name: Install requirements
         run: |
@@ -28,4 +28,4 @@ jobs:
           pip install -e .
 
       - name: Run sanity check
-        run: python sanity_test.py
+        run: python tests/sanity.py

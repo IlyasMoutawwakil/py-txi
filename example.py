@@ -1,12 +1,14 @@
-from py_tgi import TGIServer, BatchedInferenceClient
+from logging import basicConfig, INFO
+from py_tgi import TGI
 
-tgi_server = TGIServer(model="gpt2", sharded=False)
+basicConfig(level=INFO) # to stream tgi container logs
+
+llm = TGI(model="TheBloke/Mistral-7B-Instruct-v0.1-AWQ", quantization="awq")
 
 try:
-    client = BatchedInferenceClient(url=tgi_server.url)
-    output = client.generate(["Hi, I'm an example 1", "Hi, I'm an example 2"])
+    output = llm.generate(["Hi, I'm an example 1", "Hi, I'm an example 2"])
     print("Output:", output)
 except Exception as e:
     print(e)
 finally:
-    tgi_server.close()
+    llm.close()

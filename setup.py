@@ -5,7 +5,6 @@ setup(
     version="0.1",
     packages=find_packages(),
     install_requires=[
-        "docker",
-        "huggingface-hub",
+        "docker" "huggingface-hub",
     ],
 )
