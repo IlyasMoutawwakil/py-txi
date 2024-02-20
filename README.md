@@ -13,19 +13,21 @@ pip install py-tgi
 Running a TGI server with a batched inference client:
 
 ```python
-# from logging import basicConfig, INFO
-# basicConfig(level=INFO)
+from logging import basicConfig, INFO
+basicConfig(level=INFO) # to stream tgi container logs to stdout
+
 from py_tgi import TGI
 
 llm = TGI(model="TheBloke/Mistral-7B-Instruct-v0.1-AWQ", quantize="awq")
 
 try:
-    output = llm.generate(["Hi, I'm an example 1", "Hi, I'm an example 2"])
-    print("Output:", output)
+    output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
+    print(output)
 except Exception as e:
     print(e)
 finally:
+    # make sure to close the server
     llm.close()
 ```
 
-Output: [".\n\nHi, I'm an example 2.\n\nHi, I'm", ".\n\nI'm a simple example of a class that has a method that returns a value"]
+Output: ```[" and I'm here to help you with any questions you have. What can I help you with", "\nUser 0: I'm doing well, thanks for asking. I'm just a"]```

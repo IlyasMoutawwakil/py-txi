@@ -1,17 +1,19 @@
-name: CPU Test
+name: Test
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  cpu_test:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -20,12 +22,12 @@ jobs:
       - name: Set up Python 3.10
         uses: actions/setup-python@v3
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install requirements
         run: |
           pip install --upgrade pip
           pip install -e .
 
-      - name: Run sanity check
-        run: python tests/sanity.py
+      - name: Run test
+        run: python tests/test.py

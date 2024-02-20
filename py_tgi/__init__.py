@@ -1,12 +1,12 @@
 import os
 import time
-from logging import getLogger
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, Literal, List, Union
+from logging import getLogger
+from typing import List, Literal, Optional, Union
 
 import docker
-import docker.types
 import docker.errors
+import docker.types
 from huggingface_hub import InferenceClient
 from huggingface_hub.inference._text_generation import TextGenerationResponse
 
@@ -67,9 +67,7 @@ class TGI:
             LOGGER.info("\t+ Checking if TGI image exists")
             self.docker_client.images.get(f"{self.image}:{self.version}")
         except docker.errors.ImageNotFound:
-            LOGGER.info(
-                "\t+ TGI image not found, downloading it (this may take a while)"
-            )
+            LOGGER.info("\t+ TGI image not found, downloading it (this may take a while)")
             self.docker_client.images.pull(f"{self.image}:{self.version}")
 
         env = {}
@@ -103,11 +101,7 @@ class TGI:
                 device_ids = get_nvidia_gpu_devices()
 
             LOGGER.info(f"\t+ Using GPU(s): {device_ids}")
-            self.device_requests = [
-                docker.types.DeviceRequest(
-                    device_ids=[device_ids], capabilities=[["gpu"]]
-                )
-            ]
+            self.device_requests = [docker.types.DeviceRequest(device_ids=[device_ids], capabilities=[["gpu"]])]
         except Exception:
             LOGGER.info("\t+ No GPU detected")
             self.device_requests = None
@@ -172,9 +166,7 @@ class TGI:
         elif isinstance(prompt, list):
             with ThreadPoolExecutor(max_workers=len(prompt)) as executor:
                 futures = [
-                    executor.submit(
-                        self.tgi_client.text_generation, prompt=prompt[i], **kwargs
-                    )
+                    executor.submit(self.tgi_client.text_generation, prompt=prompt[i], **kwargs)
                     for i in range(len(prompt))
                 ]
 

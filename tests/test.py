@@ -1,4 +1,5 @@
-from logging import basicConfig, INFO
+from logging import INFO, basicConfig
+
 from py_tgi import TGI
 
 basicConfig(level=INFO)
