@@ -12,8 +12,6 @@ import docker.types
 from huggingface_hub import InferenceClient
 from huggingface_hub.inference._text_generation import TextGenerationResponse
 
-from .utils import is_nvidia_system
-
 basicConfig(level=INFO)
 LOGGER = getLogger("tgi")
 HF_CACHE_DIR = f"{os.path.expanduser('~')}/.cache/huggingface/hub"
@@ -97,51 +95,37 @@ class TGI:
             self.command.append("--disable-custom-kernels")
 
         if gpus is not None and isinstance(gpus, str) and gpus == "all":
-            if not is_nvidia_system():
-                raise Exception("`gpus` is set to `all` but no NVIDIA GPU(s) found")
-
             LOGGER.info("\t+ Using all GPU(s)")
             self.device_requests = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
-
         elif gpus is not None and isinstance(gpus, int):
-            if not is_nvidia_system():
-                raise Exception(f"`gpus` is set to integer `{gpus}` but no NVIDIA GPU(s) found")
-
             LOGGER.info(f"\t+ Using {gpus} GPU(s)")
             self.device_requests = [docker.types.DeviceRequest(count=gpus, capabilities=[["gpu"]])]
-
         elif gpus is not None and isinstance(gpus, str) and re.match(r"^\d+(,\d+)*$", gpus):
-            if not is_nvidia_system():
-                raise Exception(
-                    f"`gpus` is set to a list of comma separated integers `{gpus}` but no NVIDIA GPU(s) found"
-                )
-
             LOGGER.info(f"\t+ Using GPU(s) {gpus}")
             self.device_requests = [docker.types.DeviceRequest(device_ids=[gpus], capabilities=[["gpu"]])]
-
-        elif devices is not None and isinstance(devices, list) and all(Path(d).exists() for d in devices):
-            LOGGER.info(f"\t+ Using custom device(s) {devices}")
-            self.device_requests = [
-                docker.types.DeviceRequest(device=device, capabilities=[["gpu"]]) for device in devices
-            ]
-
         else:
-            LOGGER.info("\t+ Not using any GPU(s) or device(s)")
+            LOGGER.info("\t+ Not using any GPU(s)")
             self.device_requests = None
 
-        self.tgi_container = self.docker_client.containers.run(
+        if devices is not None and isinstance(devices, list) and all(Path(d).exists() for d in devices):
+            LOGGER.info(f"\t+ Using custom device(s) {devices}")
+            self.devices = devices
+
+        self.closed = False
+        self.docker_container = self.docker_client.containers.run(
             image=self.image,
             command=self.command,
             volumes={self.volume: {"bind": "/data", "mode": "rw"}},
             ports={"80/tcp": (self.address, self.port)},
             device_requests=self.device_requests,
             shm_size=self.shm_size,
+            devices=self.devices,
             environment=env,
             detach=True,
         )
 
         LOGGER.info("\t+ Waiting for TGI server to be ready")
-        for line in self.tgi_container.logs(stream=True):
+        for line in self.docker_container.logs(stream=True):
             tgi_log = line.decode("utf-8").strip()
             if "Connected" in tgi_log:
                 break
@@ -163,17 +147,6 @@ class TGI:
                 LOGGER.info("\t+ TGI server not ready, retrying in 1 second")
                 time.sleep(1)
 
-    def close(self) -> None:
-        if hasattr(self, "tgi_container"):
-            LOGGER.info("\t+ Stoping TGI container")
-            self.tgi_container.stop()
-            LOGGER.info("\t+ Waiting for TGI container to stop")
-            self.tgi_container.wait()
-
-        if hasattr(self, "docker_client"):
-            LOGGER.info("\t+ Closing docker client")
-            self.docker_client.close()
-
     def generate(
         self, prompt: Union[str, List[str]], **kwargs
     ) -> Union[TextGenerationResponse, List[TextGenerationResponse]]:
@@ -192,10 +165,24 @@ class TGI:
                 output.append(futures[i].result())
             return output
 
+    def close(self) -> None:
+        if not self.closed:
+            if hasattr(self, "docker_container"):
+                LOGGER.info("\t+ Stoping docker container")
+                self.docker_container.stop()
+                self.docker_container.wait()
+
+            if hasattr(self, "docker_client"):
+                LOGGER.info("\t+ Closing docker client")
+                self.docker_client.close()
+
+        self.closed = True
+
     def __call__(
         self, prompt: Union[str, List[str]], **kwargs
     ) -> Union[TextGenerationResponse, List[TextGenerationResponse]]:
         return self.generate(prompt, **kwargs)
 
     def __del__(self) -> None:
-        self.close()
+        if not self.closed:
+            self.close()

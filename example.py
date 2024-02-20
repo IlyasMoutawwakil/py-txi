@@ -1,11 +1,31 @@
 from py_tgi import TGI
 from py_tgi.utils import is_nvidia_system, is_rocm_system
 
-llm = TGI(
-    quantize="gptq",
-    model="TheBloke/Mistral-7B-Instruct-v0.1-AWQ",
-    gpus="0,1" if is_nvidia_system() else None,
-    devices=["/dev/kfd", "/dev/dri"] if is_rocm_system() else None,
-)
-output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
-print(output)
+if is_rocm_system():
+    llm = TGI(
+        model="TheBloke/Llama-2-7B-AWQ",  # model name
+        image="ghcr.io/huggingface/text-generation-inference:latest-rocm",  # rocm image
+        devices=["/dev/kfd", "/dev/dri"],  # all rocm devices
+        quantize="gptq",  # use exllama kernels
+    )
+    output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
+    print(output)
+
+elif is_nvidia_system():
+    llm = TGI(
+        model="TheBloke/Llama-2-7B-AWQ",  # model name
+        image="ghcr.io/huggingface/text-generation-inference:latest",  # rocm image
+        quantize="gptq",  # use exllama kernels
+        gpus="all",  # all gpus
+    )
+    output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
+    print(output)
+
+else:
+    llm = TGI(
+        model="gpt2",  # model name
+        sharded=False,  # disable sharding on cpu
+        image="ghcr.io/huggingface/text-generation-inference:latest-rocm",  # rocm image
+    )
+    output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
+    print(output)
