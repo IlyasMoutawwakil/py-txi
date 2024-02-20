@@ -2,7 +2,7 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
-PY_TGI_VERSION = "0.1.2"
+PY_TGI_VERSION = "0.1.3"
 
 common_setup_kwargs = {
     "author": "Ilyas Moutawwakil",
