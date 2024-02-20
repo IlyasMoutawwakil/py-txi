@@ -1,7 +1,9 @@
 import os
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
-from logging import getLogger
+from logging import INFO, basicConfig, getLogger
+from pathlib import Path
 from typing import List, Literal, Optional, Union
 
 import docker
@@ -10,13 +12,15 @@ import docker.types
 from huggingface_hub import InferenceClient
 from huggingface_hub.inference._text_generation import TextGenerationResponse
 
-from .utils import get_nvidia_gpu_devices, timeout
+from .utils import is_nvidia_system
 
+basicConfig(level=INFO)
 LOGGER = getLogger("tgi")
 HF_CACHE_DIR = f"{os.path.expanduser('~')}/.cache/huggingface/hub"
 
-Quantization_Literal = Literal["bitsandbytes-nf4", "bitsandbytes-fp4", "gptq"]
-Torch_Dtype_Literal = Literal["float32", "float16", "bfloat16"]
+
+Dtype_Literal = Literal["float32", "float16", "bfloat16"]
+Quantize_Literal = Literal["bitsandbytes-nf4", "bitsandbytes-fp4", "gptq"]
 
 
 class TGI:
@@ -26,18 +30,19 @@ class TGI:
         model: str,
         revision: str = "main",
         # image options
-        image: str = "ghcr.io/huggingface/text-generation-inference",
-        version: str = "latest",
+        image: str = "ghcr.io/huggingface/text-generation-inference:latest",
         # docker options
-        volume: str = HF_CACHE_DIR,
+        port: int = 1111,
         shm_size: str = "1g",
         address: str = "127.0.0.1",
-        port: int = 1111,
+        volume: str = HF_CACHE_DIR,  # automatically connects local hf cache to the container's /data
+        devices: Optional[List[str]] = None,  # ["/dev/kfd", "/dev/dri"] or None for custom devices (ROCm)
+        gpus: Optional[Union[str, int]] = None,  # "all" or "0,1,2,3" or 3 or None for NVIDIA
         # tgi launcher options
         sharded: Optional[bool] = None,
         num_shard: Optional[int] = None,
-        torch_dtype: Optional[Torch_Dtype_Literal] = None,
-        quantize: Optional[Quantization_Literal] = None,
+        dtype: Optional[Dtype_Literal] = None,
+        quantize: Optional[Quantize_Literal] = None,
         trust_remote_code: Optional[bool] = False,
         disable_custom_kernels: Optional[bool] = False,
     ) -> None:
@@ -46,16 +51,15 @@ class TGI:
         self.revision = revision
         # image options
         self.image = image
-        self.version = version
         # docker options
         self.port = port
         self.volume = volume
         self.address = address
         self.shm_size = shm_size
         # tgi launcher options
+        self.dtype = dtype
         self.sharded = sharded
         self.num_shard = num_shard
-        self.torch_dtype = torch_dtype
         self.quantize = quantize
         self.trust_remote_code = trust_remote_code
         self.disable_custom_kernels = disable_custom_kernels
@@ -64,11 +68,12 @@ class TGI:
         self.docker_client = docker.from_env()
 
         try:
-            LOGGER.info("\t+ Checking if TGI image exists")
-            self.docker_client.images.get(f"{self.image}:{self.version}")
+            LOGGER.info("\t+ Checking if TGI image is available locally")
+            self.docker_client.images.get(self.image)
+            LOGGER.info("\t+ TGI image found locally")
         except docker.errors.ImageNotFound:
-            LOGGER.info("\t+ TGI image not found, downloading it (this may take a while)")
-            self.docker_client.images.pull(f"{self.image}:{self.version}")
+            LOGGER.info("\t+ TGI image not found locally, pulling from Docker Hub")
+            self.docker_client.images.pull(self.image)
 
         env = {}
         if os.environ.get("HUGGING_FACE_HUB_TOKEN", None) is not None:
@@ -83,32 +88,50 @@ class TGI:
             self.command.extend(["--num-shard", str(self.num_shard)])
         if self.quantize is not None:
             self.command.extend(["--quantize", self.quantize])
-        if self.torch_dtype is not None:
-            self.command.extend(["--dtype", self.torch_dtype])
+        if self.dtype is not None:
+            self.command.extend(["--dtype", self.dtype])
 
         if self.trust_remote_code:
             self.command.append("--trust-remote-code")
         if self.disable_custom_kernels:
             self.command.append("--disable-custom-kernels")
 
-        try:
-            LOGGER.info("\t+ Checking if GPU is available")
-            if os.environ.get("CUDA_VISIBLE_DEVICES") is not None:
-                LOGGER.info("\t+ Using specified `CUDA_VISIBLE_DEVICES` to set GPU(s)")
-                device_ids = os.environ.get("CUDA_VISIBLE_DEVICES")
-            else:
-                LOGGER.info("\t+ Using nvidia-smi to get available GPU(s) (if any)")
-                device_ids = get_nvidia_gpu_devices()
+        if gpus is not None and isinstance(gpus, str) and gpus == "all":
+            if not is_nvidia_system():
+                raise Exception("`gpus` is set to `all` but no NVIDIA GPU(s) found")
 
-            LOGGER.info(f"\t+ Using GPU(s): {device_ids}")
-            self.device_requests = [docker.types.DeviceRequest(device_ids=[device_ids], capabilities=[["gpu"]])]
-        except Exception:
-            LOGGER.info("\t+ No GPU detected")
+            LOGGER.info("\t+ Using all GPU(s)")
+            self.device_requests = [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
+
+        elif gpus is not None and isinstance(gpus, int):
+            if not is_nvidia_system():
+                raise Exception(f"`gpus` is set to integer `{gpus}` but no NVIDIA GPU(s) found")
+
+            LOGGER.info(f"\t+ Using {gpus} GPU(s)")
+            self.device_requests = [docker.types.DeviceRequest(count=gpus, capabilities=[["gpu"]])]
+
+        elif gpus is not None and isinstance(gpus, str) and re.match(r"^\d+(,\d+)*$", gpus):
+            if not is_nvidia_system():
+                raise Exception(
+                    f"`gpus` is set to a list of comma separated integers `{gpus}` but no NVIDIA GPU(s) found"
+                )
+
+            LOGGER.info(f"\t+ Using GPU(s) {gpus}")
+            self.device_requests = [docker.types.DeviceRequest(device_ids=[gpus], capabilities=[["gpu"]])]
+
+        elif devices is not None and isinstance(devices, list) and all(Path(d).exists() for d in devices):
+            LOGGER.info(f"\t+ Using custom device(s) {devices}")
+            self.device_requests = [
+                docker.types.DeviceRequest(device=device, capabilities=[["gpu"]]) for device in devices
+            ]
+
+        else:
+            LOGGER.info("\t+ Not using any GPU(s) or device(s)")
             self.device_requests = None
 
         self.tgi_container = self.docker_client.containers.run(
+            image=self.image,
             command=self.command,
-            image=f"{self.image}:{self.version}",
             volumes={self.volume: {"bind": "/data", "mode": "rw"}},
             ports={"80/tcp": (self.address, self.port)},
             device_requests=self.device_requests,
@@ -118,28 +141,27 @@ class TGI:
         )
 
         LOGGER.info("\t+ Waiting for TGI server to be ready")
-        with timeout(60):
-            for line in self.tgi_container.logs(stream=True):
-                tgi_log = line.decode("utf-8").strip()
-                if "Connected" in tgi_log:
-                    break
-                elif "Error" in tgi_log:
-                    raise Exception(f"\t {tgi_log}")
+        for line in self.tgi_container.logs(stream=True):
+            tgi_log = line.decode("utf-8").strip()
+            if "Connected" in tgi_log:
+                break
+            elif "Error" in tgi_log:
+                raise Exception(f"TGI server failed to start: {tgi_log}")
 
-                LOGGER.info(f"\t {tgi_log}")
+            LOGGER.info(f"\t {tgi_log}")
 
         LOGGER.info("\t+ Conecting to TGI server")
         self.url = f"http://{self.address}:{self.port}"
-        with timeout(60):
-            while True:
-                try:
-                    self.tgi_client = InferenceClient(model=self.url)
-                    self.tgi_client.text_generation("Hello world!")
-                    LOGGER.info(f"\t+ Connected to TGI server at {self.url}")
-                    break
-                except Exception:
-                    LOGGER.info("\t+ TGI server not ready, retrying in 1 second")
-                    time.sleep(1)
+
+        while True:
+            try:
+                self.tgi_client = InferenceClient(model=self.url)
+                self.tgi_client.text_generation("Hello world!")
+                LOGGER.info("\t+ Connected to TGI server successfully")
+                break
+            except Exception:
+                LOGGER.info("\t+ TGI server not ready, retrying in 1 second")
+                time.sleep(1)
 
     def close(self) -> None:
         if hasattr(self, "tgi_container"):
@@ -151,11 +173,6 @@ class TGI:
         if hasattr(self, "docker_client"):
             LOGGER.info("\t+ Closing docker client")
             self.docker_client.close()
-
-    def __call__(
-        self, prompt: Union[str, List[str]], **kwargs
-    ) -> Union[TextGenerationResponse, List[TextGenerationResponse]]:
-        return self.generate(prompt, **kwargs)
 
     def generate(
         self, prompt: Union[str, List[str]], **kwargs
@@ -174,3 +191,11 @@ class TGI:
             for i in range(len(prompt)):
                 output.append(futures[i].result())
             return output
+
+    def __call__(
+        self, prompt: Union[str, List[str]], **kwargs
+    ) -> Union[TextGenerationResponse, List[TextGenerationResponse]]:
+        return self.generate(prompt, **kwargs)
+
+    def __del__(self) -> None:
+        self.close()

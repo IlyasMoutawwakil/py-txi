@@ -13,21 +13,18 @@ pip install py-tgi
 Running a TGI server with a batched inference client:
 
 ```python
-from logging import basicConfig, INFO
-basicConfig(level=INFO) # to stream tgi container logs to stdout
-
 from py_tgi import TGI
+from py_tgi.utils import is_nvidia_system, is_rocm_system
 
-llm = TGI(model="TheBloke/Mistral-7B-Instruct-v0.1-AWQ", quantize="awq")
+llm = TGI(
+    quantize="gptq",
+    model="TheBloke/Mistral-7B-Instruct-v0.1-AWQ",
+    gpus="0,1" if is_nvidia_system() else None,
+    devices=["/dev/kfd", "/dev/dri"] if is_rocm_system() else None,
+)
+output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
+print(output)
 
-try:
-    output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
-    print(output)
-except Exception as e:
-    print(e)
-finally:
-    # make sure to close the server
-    llm.close()
 ```
 
 Output: ```[" and I'm here to help you with any questions you have. What can I help you with", "\nUser 0: I'm doing well, thanks for asking. I'm just a"]```
