@@ -12,6 +12,8 @@ import docker.types
 from huggingface_hub import InferenceClient
 from huggingface_hub.inference._text_generation import TextGenerationResponse
 
+from .utils import is_rocm_system
+
 basicConfig(level=INFO)
 LOGGER = getLogger("tgi")
 HF_CACHE_DIR = f"{os.path.expanduser('~')}/.cache/huggingface/hub"
@@ -62,6 +64,10 @@ class TGI:
         self.trust_remote_code = trust_remote_code
         self.disable_custom_kernels = disable_custom_kernels
 
+        if is_rocm_system() and "-rocm" not in self.image:
+            LOGGER.warning("ROCm system detected, but the image does not contain 'rocm' in its name. Adding it.")
+            self.image = self.image + "-rocm"
+
         LOGGER.info("\t+ Starting Docker client")
         self.docker_client = docker.from_env()
 
@@ -110,6 +116,9 @@ class TGI:
         if devices is not None and isinstance(devices, list) and all(Path(d).exists() for d in devices):
             LOGGER.info(f"\t+ Using custom device(s) {devices}")
             self.devices = devices
+        else:
+            LOGGER.info("\t+ Not using any custom device(s)")
+            self.devices = None
 
         self.closed = False
         self.docker_container = self.docker_client.containers.run(

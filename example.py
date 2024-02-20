@@ -14,7 +14,6 @@ if is_rocm_system():
 elif is_nvidia_system():
     llm = TGI(
         model="TheBloke/Llama-2-7B-AWQ",  # model name
-        image="ghcr.io/huggingface/text-generation-inference:latest",  # rocm image
         quantize="gptq",  # use exllama kernels
         gpus="all",  # all gpus
     )
@@ -25,7 +24,6 @@ else:
     llm = TGI(
         model="gpt2",  # model name
         sharded=False,  # disable sharding on cpu
-        image="ghcr.io/huggingface/text-generation-inference:latest-rocm",  # rocm image
     )
     output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
     print(output)
