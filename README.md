@@ -1,6 +1,6 @@
 # Py-TGI
 
-Py-TGI is a Python wrapper around [Text-Generation-Inference](https://github.com/huggingface/text-generation-inference) that enables creating and running TGI instances through the awesome `docker-py` in a similar style to Transformers API.
+Py-TGI is a Python wrapper around [Text-Generation-Inference](https://github.com/huggingface/text-generation-inference) and [Text-Embedding-Inference](https://github.com/huggingface/text-embeddings-inference) that enables creating and running TGI/TEI instances through the awesome `docker-py` in a similar style to Transformers API.
 
 ## Installation
 
@@ -8,17 +8,17 @@ Py-TGI is a Python wrapper around [Text-Generation-Inference](https://github.com
 pip install py-tgi
 ```
 
+Py-TGI is designed to be used in a similar way to Transformers API. We use `docker-py` (instead of a dirty `subprocess` solution) so that the containers you run are linked to the main process and are stopped automatically when your code finishes or fails.
+
 ## Usage
 
-Py-TGI is designed to be used in a similar way to Transformers API. We use `docker-py` (instead of a dirty `subprocess` solution) so that the containers you run are linked to the main process and are stopped automatically when your code finishes or fails.
 Here's an example of how to use it:
 
 ```python
 from py_tgi import TGI, is_nvidia_system, is_rocm_system
 
 llm = TGI(
-    model="TheBloke/Llama-2-7B-AWQ",  # awq model checkpoint
-    quantize="gptq",  # use exllama kernels (awq compatible)
+    model="NousResearch/Llama-2-7b-hf",
     devices=["/dev/kfd", "/dev/dri"] if is_rocm_system() else None,
     gpus="all" if is_nvidia_system() else None,
 )
@@ -35,8 +35,7 @@ embed = TEI(
     model="BAAI/bge-large-en-v1.5",
     dtype="float16",
     pooling="mean",
-    gpus="all",
-    port=1234,
+    gpus="all" if is_nvidia_system() else None,
 )
 output = embed.encode(["Hi, I'm an embedding model", "I'm fine, how are you?"])
 print(output)
