@@ -1,4 +1,8 @@
+import os
 import subprocess
+
+HF_CACHE_DIR = os.path.expanduser("~/.cache/huggingface/hub")
+CONNECTION_TIMEOUT = 60
 
 
 def is_rocm_system() -> bool:

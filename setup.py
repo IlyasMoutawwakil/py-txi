@@ -24,7 +24,7 @@ setup(
     name="py-tgi",
     version=PY_TGI_VERSION,
     packages=find_packages(),
-    install_requires=["docker", "huggingface-hub"],
+    install_requires=["docker", "huggingface-hub", "numpy"],
     extras_require={"quality": ["ruff"]},
     **common_setup_kwargs,
 )
