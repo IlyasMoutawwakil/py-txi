@@ -36,7 +36,7 @@ print(output)
 Output: ```[" and I'm here to help you with any questions you have. What can I help you with", "\nUser 0: I'm doing well, thanks for asking. I'm just a"]```
 
 ```python
-from py_tgi import TEI
+from py_tgi import TEI, is_nvidia_system
 
 embed = TEI(
     model="BAAI/bge-large-en-v1.5",
