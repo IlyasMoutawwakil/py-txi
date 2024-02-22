@@ -5,7 +5,7 @@
 [![PyPI - Format](https://img.shields.io/pypi/format/py-tgi)](https://pypi.org/project/py-tgi/)
 [![Downloads](https://pepy.tech/badge/py-tgi)](https://pepy.tech/project/py-tgi)
 [![PyPI - License](https://img.shields.io/pypi/l/py-tgi)](https://pypi.org/project/py-tgi/)
-[![Tests](https://github.com/IlyasMoutawwakil/py-tgi/actions/workflows/test.yaml/badge.svg)](https://github.com/IlyasMoutawwakil/py-tgi/actions/workflows/test.yaml)
+[![Tests](https://github.com/IlyasMoutawwakil/py-tgi/actions/workflows/tests.yaml/badge.svg)](https://github.com/IlyasMoutawwakil/py-tgi/actions/workflows/tests.yaml)
 
 Py-TGI is a Python wrapper around [Text-Generation-Inference](https://github.com/huggingface/text-generation-inference) and [Text-Embedding-Inference](https://github.com/huggingface/text-embeddings-inference) that enables creating and running TGI/TEI instances through the awesome `docker-py` in a similar style to Transformers API.
 
