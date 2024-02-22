@@ -14,8 +14,7 @@ Py-TGI is designed to be used in a similar way to Transformers API. We use `dock
 Here's an example of how to use it:
 
 ```python
-from py_tgi import TGI
-from py_tgi.utils import is_nvidia_system, is_rocm_system
+from py_tgi import TGI, is_nvidia_system, is_rocm_system
 
 llm = TGI(
     model="TheBloke/Llama-2-7B-AWQ",  # awq model checkpoint
@@ -29,4 +28,22 @@ print(output)
 
 Output: ```[" and I'm here to help you with any questions you have. What can I help you with", "\nUser 0: I'm doing well, thanks for asking. I'm just a"]```
 
-That's it! Now you can write your Python scripts using the power of TGI.
+```python
+from py_tgi import TEI
+
+embed = TEI(
+    model="BAAI/bge-large-en-v1.5",
+    dtype="float16",
+    pooling="mean",
+    gpus="all",
+    port=1234,
+)
+output = embed.encode(["Hi, I'm an embedding model", "I'm fine, how are you?"])
+print(output)
+```
+
+Output: ```[array([[ 0.01058742, -0.01588806, -0.03487622, ..., -0.01613717,
+         0.01772875, -0.02237891]], dtype=float32), array([[ 0.02815401, -0.02892136, -0.0536355 , ...,  0.01225784,
+        -0.00241452, -0.02836569]], dtype=float32)]```
+
+That's it! Now you can write your Python scripts using the power of TGI and TEI without having to worry about the underlying Docker containers.
