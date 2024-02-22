@@ -17,11 +17,11 @@ from .utils import is_rocm_system
 basicConfig(level=INFO)
 
 CONNECTION_TIMEOUT = 60
-LOGGER = getLogger("tgi")
+LOGGER = getLogger("py-tgi")
 HF_CACHE_DIR = f"{os.path.expanduser('~')}/.cache/huggingface/hub"
 
 
-Dtype_Literal = Literal["float32", "float16", "bfloat16"]
+DType_Literal = Literal["float32", "float16", "bfloat16"]
 Quantize_Literal = Literal["bitsandbytes-nf4", "bitsandbytes-fp4", "gptq"]
 
 
@@ -43,7 +43,7 @@ class TGI:
         # tgi launcher options
         sharded: Optional[bool] = None,
         num_shard: Optional[int] = None,
-        dtype: Optional[Dtype_Literal] = None,
+        dtype: Optional[DType_Literal] = None,
         quantize: Optional[Quantize_Literal] = None,
         trust_remote_code: Optional[bool] = False,
         disable_custom_kernels: Optional[bool] = False,
@@ -164,6 +164,10 @@ class TGI:
 
         raise Exception("TGI server took too long to start (60 seconds)")
 
+    @classmethod
+    def from_pretrained(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
+
     def generate(
         self, prompt: Union[str, List[str]], **kwargs
     ) -> Union[TextGenerationResponse, List[TextGenerationResponse]]:
@@ -199,7 +203,3 @@ class TGI:
         self, prompt: Union[str, List[str]], **kwargs
     ) -> Union[TextGenerationResponse, List[TextGenerationResponse]]:
         return self.generate(prompt, **kwargs)
-
-    def __del__(self) -> None:
-        if not self.closed:
-            self.close()
