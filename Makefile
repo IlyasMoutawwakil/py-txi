@@ -1,5 +1,5 @@
 # List of targets that are not associated with files
-.PHONY:	quality style install
+.PHONY:	quality style install test
 
 quality:
 	ruff check .
@@ -8,6 +8,9 @@ quality:
 style:
 	ruff format .
 	ruff check --fix .
+
+test:
+	python tests/test.py
 
 install:
 	pip install -e .
