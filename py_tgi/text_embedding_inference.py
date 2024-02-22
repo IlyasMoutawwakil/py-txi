@@ -26,7 +26,7 @@ class TEI(InferenceServer):
         model: str,
         revision: str = "main",
         # image options
-        image: str = "ghcr.io/huggingface/text-embeddings-inference:cpu-latest",
+        image: str = "ghcr.io/huggingface/text-embeddings-inference:latest",
         # docker options
         port: int = 1111,
         shm_size: str = "1g",
@@ -52,6 +52,11 @@ class TEI(InferenceServer):
         self.max_batch_tokens = max_batch_tokens
         self.max_batch_requests = max_batch_requests
         self.max_client_batch_size = max_client_batch_size
+
+        if gpus is None and "cpu-" not in image:
+            LOGGER.warning("No GPUs were specified, but the image does not contain 'cpu-'. Adding it.")
+            image_, tag_ = image.split(":")
+            image = f"{image_}:cpu-{tag_}"
 
         super().__init__(
             model=model,

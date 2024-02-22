@@ -51,9 +51,9 @@ class TGI(InferenceServer):
         self.trust_remote_code = trust_remote_code
         self.disable_custom_kernels = disable_custom_kernels
 
-        if is_rocm_system() and "-rocm" not in self.image:
+        if devices and is_rocm_system() and "-rocm" not in image:
             LOGGER.warning("ROCm system detected, but the image does not contain '-rocm'. Adding it.")
-            self.image = self.image + "-rocm"
+            image = image + "-rocm"
 
         super().__init__(
             model=model,
