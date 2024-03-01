@@ -1,8 +1,11 @@
-import os
+import socket
 import subprocess
 
-HF_CACHE_DIR = os.path.expanduser("~/.cache/huggingface/hub")
-CONNECTION_TIMEOUT = 60
+
+def get_free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("", 0))
+        return s.getsockname()[1]
 
 
 def is_rocm_system() -> bool:

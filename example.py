@@ -1,20 +1,21 @@
-from py_tgi import TEI, TGI, is_nvidia_system, is_rocm_system
+from py_txi.text_embedding_inference import TEI, TEIConfig
+from py_txi.text_generation_inference import TGI, TGIConfig
+from py_txi.utils import get_free_port
 
-if is_nvidia_system():
-    llm = TGI(model="NousResearch/Llama-2-7b-hf", gpus="all", port=1234)
-elif is_rocm_system():
-    llm = TGI(model="NousResearch/Llama-2-7b-hf", devices=["/dev/kfd", "/dev/dri"], port=1234)
-else:
-    llm = TGI(model="NousResearch/Llama-2-7b-hf", port=1234)
+port = get_free_port()
+ports = {"80/tcp": ("127.0.0.1", port)}
 
-
-output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
-print("LLM:", output)
-
-if is_nvidia_system():
-    embed = TEI(model="BAAI/bge-large-en-v1.5", dtype="float16", pooling="mean", gpus="all", port=4321)
-else:
-    embed = TEI(model="BAAI/bge-large-en-v1.5", dtype="float16", pooling="mean", port=4321)
-
+tei_config = TEIConfig(pooling="cls", ports=ports)
+embed = TEI(tei_config)
 output = embed.encode(["Hi, I'm an embedding model", "I'm fine, how are you?"])
 print("Embed:", output)
+embed.close()
+
+port = get_free_port()
+ports = {"80/tcp": ("127.0.0.1", port)}
+
+tgi_config = TGIConfig(ports=ports)
+llm = TGI(tgi_config)
+output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
+print("LLM:", output)
+llm.close()

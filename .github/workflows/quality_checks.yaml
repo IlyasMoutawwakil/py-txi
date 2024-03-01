@@ -1,4 +1,4 @@
-name: tests
+name: quality checks
 
 on:
   push:
@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  run_tests:
+  run_quality_checks:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
 
       - name: Set up Python 3.10
@@ -24,11 +24,11 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install requirements
+      - name: Install quality requirements
         run: |
           pip install --upgrade pip
-          pip install -e .[testing]
+          pip install -e .[quality]
 
-      - name: Run test
+      - name: Check style
         run: |
-          pytest tests/
+          make quality
