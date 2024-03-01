@@ -5,7 +5,7 @@ from py_txi.text_generation_inference import TGI, TGIConfig
 
 
 def test_tei():
-    embed = TEI(config=TEIConfig(pooling="cls", gpus=1))
+    embed = TEI(config=TEIConfig(pooling="cls"))
     output = embed.encode("Hi, I'm a language model")
     assert isinstance(output, np.ndarray)
     output = embed.encode(["Hi, I'm a language model", "I'm fine, how are you?"])
@@ -13,7 +13,7 @@ def test_tei():
 
 
 def test_tgi():
-    llm = TGI(config=TGIConfig(dtype="float16", gpus=1))
+    llm = TGI(config=TGIConfig(dtype="float16"))
     output = llm.generate("Hi, I'm a sanity test")
     assert isinstance(output, str)
     output = llm.generate(["Hi, I'm a sanity test", "I'm a second sentence"])
