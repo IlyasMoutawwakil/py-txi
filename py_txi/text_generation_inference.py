@@ -7,7 +7,7 @@ from .docker_inference_server import DockerInferenceServer, DockerInferenceServe
 
 LOGGER = getLogger("TGI")
 
-
+Shareded_Literal = Literal["true", "false"]
 DType_Literal = Literal["float32", "float16", "bfloat16"]
 Quantize_Literal = Literal["bitsandbytes-nf4", "bitsandbytes-fp4", "gptq"]
 
@@ -23,7 +23,7 @@ class TGIConfig(DockerInferenceServerConfig):
     revision: str = "main"
     dtype: Optional[DType_Literal] = None
     quantize: Optional[Quantize_Literal] = None
-    sharded: Optional[bool] = None
+    sharded: Optional[Shareded_Literal] = None
     num_shard: Optional[int] = None
     trust_remote_code: Optional[bool] = None
     disable_custom_kernels: Optional[bool] = None

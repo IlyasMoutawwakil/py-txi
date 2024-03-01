@@ -6,7 +6,7 @@ output = embed.encode(["Hi, I'm an embedding model", "I'm fine, how are you?"])
 print("Embed:", output)
 embed.close()
 
-llm = TGI(config=TGIConfig(sharded=False))
+llm = TGI(config=TGIConfig(sharded="false"))
 output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
 print("LLM:", output)
 llm.close()
