@@ -14,7 +14,7 @@ def test_tei():
 
 
 def test_tgi():
-    llm = TGI(config=TGIConfig(dtype="float16"))
+    llm = TGI(config=TGIConfig(sharded="false"))
     output = llm.generate("Hi, I'm a sanity test")
     assert isinstance(output, str)
     output = llm.generate(["Hi, I'm a sanity test", "I'm a second sentence"])

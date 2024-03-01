@@ -14,8 +14,6 @@ Quantize_Literal = Literal["bitsandbytes-nf4", "bitsandbytes-fp4", "gptq"]
 
 @dataclass
 class TGIConfig(DockerInferenceServerConfig):
-    # { model_id: "gpt2", revision: Some("main"), validation_workers: 2, sharded: None, num_shard: None, quantize: None, speculate: None, dtype: None, trust_remote_code: false, max_concurrent_requests: 128, max_best_of: 2, max_stop_sequences: 4, max_top_n_tokens: 5, max_input_length: 1024, max_total_tokens: 2048, waiting_served_ratio: 1.2, max_batch_prefill_tokens: 4096, max_batch_total_tokens: None, max_waiting_tokens: 20, max_batch_size: None, enable_cuda_graphs: false, hostname: "6fedb07983ae", port: 80, shard_uds_path: "/tmp/text-generation-server", master_addr: "localhost", master_port: 29500, huggingface_hub_cache: Some("/data"), weights_cache_override: None, disable_custom_kernels: false, cuda_memory_fraction: 1.0, rope_scaling: None, rope_factor: None, json_output: false, otlp_endpoint: None, cors_allow_origin: [], watermark_gamma: None, watermark_delta: None, ngrok: false, ngrok_authtoken: None, ngrok_edge: None, tokenizer_config_path: None, disable_grammar_support: false, env: false }
-
     # Docker options
     image: str = "ghcr.io/huggingface/text-generation-inference:latest"
     # Launcher options
