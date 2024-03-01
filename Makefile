@@ -10,7 +10,7 @@ style:
 	ruff check --fix .
 
 test:
-	python tests/test.py
+	pytest tests/ -x
 
 install:
 	pip install -e .
