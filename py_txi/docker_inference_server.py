@@ -150,13 +150,11 @@ class DockerInferenceServer(ABC):
             LOGGER.info("\t+ Stoping Docker container")
             self.container.stop()
             self.container.wait()
-            del self.container
             LOGGER.info("\t+ Docker container stopped")
+            del self.container
 
         if hasattr(self, "client"):
-            LOGGER.info("\t+ Stoping Inference client")
             del self.client
-            LOGGER.info("\t+ Inference client stopped")
 
     def __del__(self) -> None:
         self.close()
