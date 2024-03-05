@@ -4,6 +4,7 @@ from logging import getLogger
 from typing import Literal, Optional, Union
 
 from .docker_inference_server import DockerInferenceServer, DockerInferenceServerConfig
+from .utils import is_rocm_system
 
 LOGGER = getLogger("TGI")
 
@@ -53,6 +54,13 @@ class TGIConfig(DockerInferenceServerConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+
+        if is_rocm_system() and "rocm" not in self.image:
+            LOGGER.warning(
+                "You are running on a ROCm system but the image is not rocm specific. "
+                "Add 'rocm' to the image name to use the rocm specific image."
+            )
+            self.image += "-rocm"
 
 
 class TGI(DockerInferenceServer):

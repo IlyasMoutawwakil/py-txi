@@ -6,6 +6,7 @@ from typing import List, Literal, Optional, Union
 import numpy as np
 
 from .docker_inference_server import DockerInferenceServer, DockerInferenceServerConfig
+from .utils import is_nvidia_system
 
 LOGGER = getLogger("TEI")
 
@@ -27,6 +28,12 @@ class TEIConfig(DockerInferenceServerConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+
+        if is_nvidia_system() and "cpu" in self.image:
+            LOGGER.warning(
+                "Your system has NVIDIA GPU, but you are using a CPU image."
+                "Consider using a GPU image for better performance."
+            )
 
 
 class TEI(DockerInferenceServer):
