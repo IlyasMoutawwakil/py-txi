@@ -2,14 +2,14 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
-PY_TGI_VERSION = "0.2.0"
+PY_TXI_VERSION = "0.4.0"
 
 common_setup_kwargs = {
     "author": "Ilyas Moutawwakil",
     "author_email": "ilyas.moutawwakil@gmail.com",
     "description": "A Python wrapper around TGI and TEI servers",
     "keywords": ["tgi", "llm", "tei", "embedding", "huggingface", "docker", "python"],
-    "url": "https://github.com/IlyasMoutawwakil/py-tgi",
+    "url": "https://github.com/IlyasMoutawwakil/py-txi",
     "long_description_content_type": "text/markdown",
     "long_description": (Path(__file__).parent / "README.md").read_text(encoding="UTF-8"),
     "platforms": ["linux", "windows", "macos"],
@@ -21,10 +21,10 @@ common_setup_kwargs = {
 
 
 setup(
-    name="py-tgi",
-    version=PY_TGI_VERSION,
+    name="py-txi",
+    version=PY_TXI_VERSION,
     packages=find_packages(),
-    install_requires=["docker", "huggingface-hub", "numpy"],
-    extras_require={"quality": ["ruff"]},
+    install_requires=["docker", "huggingface-hub", "numpy", "aiohttp"],
+    extras_require={"quality": ["ruff"], "testing": ["pytest"]},
     **common_setup_kwargs,
 )

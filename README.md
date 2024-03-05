@@ -1,51 +1,44 @@
-# Py-TGI (Py-TXI at this point xD)
+# Py-TXI (previously Py-TGI)
 
-[![PyPI version](https://badge.fury.io/py/py-tgi.svg)](https://badge.fury.io/py/py-tgi)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/py-tgi)](https://pypi.org/project/py-tgi/)
-[![PyPI - Format](https://img.shields.io/pypi/format/py-tgi)](https://pypi.org/project/py-tgi/)
-[![Downloads](https://pepy.tech/badge/py-tgi)](https://pepy.tech/project/py-tgi)
-[![PyPI - License](https://img.shields.io/pypi/l/py-tgi)](https://pypi.org/project/py-tgi/)
-[![Tests](https://github.com/IlyasMoutawwakil/py-tgi/actions/workflows/tests.yaml/badge.svg)](https://github.com/IlyasMoutawwakil/py-tgi/actions/workflows/tests.yaml)
+[![PyPI version](https://badge.fury.io/py/py-txi.svg)](https://badge.fury.io/py/py-txi)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/py-txi)](https://pypi.org/project/py-txi/)
+[![PyPI - Format](https://img.shields.io/pypi/format/py-txi)](https://pypi.org/project/py-txi/)
+[![Downloads](https://pepy.tech/badge/py-txi)](https://pepy.tech/project/py-txi)
+[![PyPI - License](https://img.shields.io/pypi/l/py-txi)](https://pypi.org/project/py-txi/)
+[![Tests](https://github.com/IlyasMoutawwakil/py-txi/actions/workflows/tests.yaml/badge.svg)](https://github.com/IlyasMoutawwakil/py-txi/actions/workflows/tests.yaml)
 
-Py-TGI is a Python wrapper around [Text-Generation-Inference](https://github.com/huggingface/text-generation-inference) and [Text-Embedding-Inference](https://github.com/huggingface/text-embeddings-inference) that enables creating and running TGI/TEI instances through the awesome `docker-py` in a similar style to Transformers API.
+Py-TXI is a Python wrapper around [Text-Generation-Inference](https://github.com/huggingface/text-generation-inference) and [Text-Embedding-Inference](https://github.com/huggingface/text-embeddings-inference) that enables creating and running TGI/TEI instances through the awesome `docker-py` in a similar style to Transformers API.
 
 ## Installation
 
 ```bash
-pip install py-tgi
+pip install py-txi
 ```
 
-Py-TGI is designed to be used in a similar way to Transformers API. We use `docker-py` (instead of a dirty `subprocess` solution) so that the containers you run are linked to the main process and are stopped automatically when your code finishes or fails.
+Py-TXI is designed to be used in a similar way to Transformers API. We use `docker-py` (instead of a dirty `subprocess` solution) so that the containers you run are linked to the main process and are stopped automatically when your code finishes or fails.
 
 ## Usage
 
 Here's an example of how to use it:
 
 ```python
-from py_tgi import TGI, is_nvidia_system, is_rocm_system
+from py_txi import TGI, is_nvidia_system, is_rocm_system
 
-llm = TGI(
-    model="NousResearch/Llama-2-7b-hf",
-    devices=["/dev/kfd", "/dev/dri"] if is_rocm_system() else None,
-    gpus="all" if is_nvidia_system() else None,
-)
+llm = TGI(config=TGIConfig(sharded="false"))
 output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
-print(output)
+print("LLM:", output)
+llm.close()
 ```
 
-Output: ```[" and I'm here to help you with any questions you have. What can I help you with", "\nUser 0: I'm doing well, thanks for asking. I'm just a"]```
+Output: ```LLM: ["er. I'm a language modeler. I'm a language modeler. I'm a language", " I'm fine, how are you? I'm fine, how are you? I'm fine,"]```
 
 ```python
-from py_tgi import TEI, is_nvidia_system
+from py_txi import TEI, is_nvidia_system
 
-embed = TEI(
-    model="BAAI/bge-large-en-v1.5",
-    dtype="float16",
-    pooling="mean",
-    gpus="all" if is_nvidia_system() else None,
-)
+embed = TEI(config=TEIConfig(pooling="cls"))
 output = embed.encode(["Hi, I'm an embedding model", "I'm fine, how are you?"])
-print(output)
+print("Embed:", output)
+embed.close()
 ```
 
 Output: ```[array([[ 0.01058742, -0.01588806, -0.03487622, ..., -0.01613717,
