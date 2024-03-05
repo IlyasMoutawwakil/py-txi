@@ -2,7 +2,7 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
-PY_TXI_VERSION = "0.4.0"
+PY_TXI_VERSION = "0.5.0"
 
 common_setup_kwargs = {
     "author": "Ilyas Moutawwakil",
