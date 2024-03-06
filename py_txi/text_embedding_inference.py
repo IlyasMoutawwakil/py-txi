@@ -5,10 +5,10 @@ from typing import List, Literal, Optional, Union
 
 import numpy as np
 
-from .docker_inference_server import DockerInferenceServer, DockerInferenceServerConfig
+from .inference_server import InferenceServer, InferenceServerConfig
 from .utils import is_nvidia_system
 
-LOGGER = getLogger("TEI")
+LOGGER = getLogger("Text-Embedding-Inference")
 
 
 Pooling_Literal = Literal["cls", "mean"]
@@ -16,7 +16,7 @@ DType_Literal = Literal["float32", "float16"]
 
 
 @dataclass
-class TEIConfig(DockerInferenceServerConfig):
+class TEIConfig(InferenceServerConfig):
     # Docker options
     image: str = "ghcr.io/huggingface/text-embeddings-inference:cpu-latest"
     # Launcher options
@@ -37,7 +37,7 @@ class TEIConfig(DockerInferenceServerConfig):
             )
 
 
-class TEI(DockerInferenceServer):
+class TEI(InferenceServer):
     NAME: str = "Text-Embedding-Inference"
     SUCCESS_SENTINEL: str = "Ready"
     FAILURE_SENTINEL: str = "Error"

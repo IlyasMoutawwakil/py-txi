@@ -1,7 +1,6 @@
 import numpy as np
 
-from py_txi.text_embedding_inference import TEI, TEIConfig
-from py_txi.text_generation_inference import TGI, TGIConfig
+from py_txi import TEI, TGI, TEIConfig, TGIConfig
 
 
 def test_tei():

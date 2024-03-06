@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from logging import getLogger
 from typing import Literal, Optional, Union
 
-from .docker_inference_server import DockerInferenceServer, DockerInferenceServerConfig
+from .inference_server import InferenceServer, InferenceServerConfig
 from .utils import is_rocm_system
 
-LOGGER = getLogger("TGI")
+LOGGER = getLogger("Text-Generation-Inference")
 
 Shareded_Literal = Literal["true", "false"]
 DType_Literal = Literal["float32", "float16", "bfloat16"]
@@ -14,7 +14,7 @@ Quantize_Literal = Literal["bitsandbytes-nf4", "bitsandbytes-fp4", "gptq"]
 
 
 @dataclass
-class TGIConfig(DockerInferenceServerConfig):
+class TGIConfig(InferenceServerConfig):
     # Docker options
     image: str = "ghcr.io/huggingface/text-generation-inference:latest"
     # Launcher options
@@ -41,7 +41,7 @@ class TGIConfig(DockerInferenceServerConfig):
             self.image += "-rocm"
 
 
-class TGI(DockerInferenceServer):
+class TGI(InferenceServer):
     NAME: str = "Text-Generation-Inference"
     SUCCESS_SENTINEL: str = "Connected"
     FAILURE_SENTINEL: str = "Error"

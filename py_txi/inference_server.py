@@ -17,11 +17,11 @@ from .utils import get_free_port
 basicConfig(level=INFO)
 
 DOCKER = docker.from_env()
-LOGGER = getLogger("docker-inference-server")
+LOGGER = getLogger("Inference-Server")
 
 
 @dataclass
-class DockerInferenceServerConfig:
+class InferenceServerConfig:
     # Image to use for the container
     image: str
     # Shared memory size for the container
@@ -44,8 +44,8 @@ class DockerInferenceServerConfig:
         metadata={"help": "Dictionary of environment variables to forward to the container."},
     )
 
+    max_concurrent_requests: Optional[int] = None
     timeout: int = 60
-    max_concurrent_requests: int = 128
 
     def __post_init__(self) -> None:
         if self.ports["80/tcp"][1] == 0:
@@ -53,12 +53,12 @@ class DockerInferenceServerConfig:
             self.ports["80/tcp"] = (self.ports["80/tcp"][0], get_free_port())
 
 
-class DockerInferenceServer(ABC):
-    NAME: str = "Docker-Inference-Server"
+class InferenceServer(ABC):
+    NAME: str = "Inference-Server"
     SUCCESS_SENTINEL: str = "Success"
     FAILURE_SENTINEL: str = "Failure"
 
-    def __init__(self, config: DockerInferenceServerConfig) -> None:
+    def __init__(self, config: InferenceServerConfig) -> None:
         self.config = config
 
         try:
@@ -89,13 +89,13 @@ class DockerInferenceServer(ABC):
         LOGGER.info(f"\t+ Building {self.NAME} command")
         self.command = []
         for k, v in asdict(self.config).items():
-            if k in DockerInferenceServerConfig.__annotations__:
+            if k in InferenceServerConfig.__annotations__:
                 continue
             elif v is not None:
                 if isinstance(v, bool):
                     self.command.append(f"--{k.replace('_', '-')}")
                 else:
-                    self.command.append(f"--{k.replace('_', '-')}={v}")
+                    self.command.append(f"--{k.replace('_', '-')}={str(v).lower()}")
 
         address, port = self.config.ports["80/tcp"]
         self.url = f"http://{address}:{port}"
