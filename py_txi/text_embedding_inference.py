@@ -15,7 +15,7 @@ Pooling_Literal = Literal["cls", "mean"]
 DType_Literal = Literal["float32", "float16"]
 
 
-@dataclass(order=False)
+@dataclass
 class TEIConfig(DockerInferenceServerConfig):
     # Docker options
     image: str = "ghcr.io/huggingface/text-embeddings-inference:cpu-latest"
@@ -24,7 +24,8 @@ class TEIConfig(DockerInferenceServerConfig):
     revision: str = "main"
     dtype: Optional[DType_Literal] = None
     pooling: Optional[Pooling_Literal] = None
-    tokenization_workers: Optional[int] = None
+    # Concurrency options
+    max_concurrent_requests: int = 512
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -45,8 +46,9 @@ class TEI(DockerInferenceServer):
         super().__init__(config)
 
     async def single_client_call(self, text: str, **kwargs) -> np.ndarray:
-        output = await self.client.feature_extraction(text=text, **kwargs)
-        return output
+        async with self.semaphore:
+            output = await self.client.feature_extraction(text=text, **kwargs)
+            return output
 
     async def batch_client_call(self, text: List[str], **kwargs) -> List[np.ndarray]:
         output = await asyncio.gather(*[self.single_client_call(t, **kwargs) for t in text])

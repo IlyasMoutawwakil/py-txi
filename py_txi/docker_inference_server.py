@@ -45,6 +45,7 @@ class DockerInferenceServerConfig:
     )
 
     timeout: int = 60
+    max_concurrent_requests: int = 128
 
     def __post_init__(self) -> None:
         if self.ports["80/tcp"][1] == 0:
@@ -125,6 +126,13 @@ class DockerInferenceServer(ABC):
             else:
                 LOGGER.info(f"\t {log}")
 
+        try:
+            asyncio.set_event_loop(asyncio.get_event_loop())
+        except RuntimeError:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+
+        self.semaphore = asyncio.Semaphore(self.config.max_concurrent_requests)
+
         LOGGER.info(f"\t+ Waiting for {self.NAME} server to be ready")
         start_time = time.time()
         while time.time() - start_time < self.config.timeout:
@@ -152,6 +160,10 @@ class DockerInferenceServer(ABC):
             self.container.wait()
             LOGGER.info("\t+ Docker container stopped")
             del self.container
+
+        if hasattr(self, "semaphore"):
+            self.semaphore
+            del self.semaphore
 
         if hasattr(self, "client"):
             del self.client
