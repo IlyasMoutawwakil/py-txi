@@ -22,7 +22,7 @@ Py-TXI is designed to be used in a similar way to Transformers API. We use `dock
 Here's an example of how to use it:
 
 ```python
-from py_txi import TGI, TGIConfig, is_nvidia_system, is_rocm_system
+from py_txi import TGI, TGIConfig
 
 llm = TGI(config=TGIConfig(sharded="false"))
 output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
@@ -33,7 +33,7 @@ llm.close()
 Output: ```LLM: ["er. I'm a language modeler. I'm a language modeler. I'm a language", " I'm fine, how are you? I'm fine, how are you? I'm fine,"]```
 
 ```python
-from py_txi import TEI, TEIConfig, is_nvidia_system
+from py_txi import TEI, TEIConfig
 
 embed = TEI(config=TEIConfig(pooling="cls"))
 output = embed.encode(["Hi, I'm an embedding model", "I'm fine, how are you?"])
