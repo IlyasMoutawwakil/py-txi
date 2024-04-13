@@ -25,6 +25,6 @@ setup(
     version=PY_TXI_VERSION,
     packages=find_packages(),
     install_requires=["docker", "huggingface-hub", "numpy", "aiohttp"],
-    extras_require={"quality": ["ruff"], "testing": ["pytest"], "coloredlogs": ["coloredlogs"]},
+    extras_require={"quality": ["ruff"], "testing": ["pytest"]},
     **common_setup_kwargs,
 )
