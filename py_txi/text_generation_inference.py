@@ -17,6 +17,7 @@ Quantize_Literal = Literal["bitsandbytes-nf4", "bitsandbytes-fp4", "gptq", "awq"
 class TGIConfig(InferenceServerConfig):
     # Launcher options
     num_shard: Optional[int] = None
+    speculate: Optional[int] = None
     cuda_graphs: Optional[int] = None
     dtype: Optional[DType_Literal] = None
     sharded: Optional[Shareded_Literal] = None

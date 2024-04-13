@@ -2,6 +2,9 @@ import socket
 import subprocess
 from datetime import datetime
 from json import loads
+from logging import INFO
+
+import coloredlogs
 
 
 def get_free_port() -> int:
@@ -59,3 +62,7 @@ def styled_logs(log: str) -> str:
     level = color_text(level, LEVEL_STYLE)
 
     return f"[{timestamp}][{target}][{level}] - {message}"
+
+
+def setup_logging():
+    coloredlogs.install(level=INFO, fmt="[%(asctime)s][%(filename)s][%(levelname)s] %(message)s")

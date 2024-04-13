@@ -1,6 +1,8 @@
 import numpy as np
 
-from py_txi import TEI, TGI, TEIConfig, TGIConfig
+from py_txi import TEI, TGI, TEIConfig, TGIConfig, setup_logging
+
+setup_logging()
 
 
 def test_cpu_tei():
