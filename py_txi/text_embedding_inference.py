@@ -17,11 +17,7 @@ DType_Literal = Literal["float32", "float16"]
 
 @dataclass
 class TEIConfig(InferenceServerConfig):
-    # Docker options
-    image: str = "ghcr.io/huggingface/text-embeddings-inference:cpu-latest"
     # Launcher options
-    model_id: str = "bert-base-uncased"
-    revision: str = "main"
     dtype: Optional[DType_Literal] = None
     pooling: Optional[Pooling_Literal] = None
     # Concurrency options
@@ -30,11 +26,20 @@ class TEIConfig(InferenceServerConfig):
     def __post_init__(self) -> None:
         super().__post_init__()
 
+        if self.image is None:
+            if is_nvidia_system() and self.gpus is not None:
+                LOGGER.info("\t+ Using the latest NVIDIA GPU image for Text-Embedding-Inference")
+                self.image = "ghcr.io/huggingface/text-embeddings-inference:latest"
+            else:
+                LOGGER.info("\t+ Using the latest CPU image for Text-Embedding-Inference")
+                self.image = "ghcr.io/huggingface/text-embeddings-inference:cpu-latest"
+
         if is_nvidia_system() and "cpu" in self.image:
-            LOGGER.warning(
-                "Your system has NVIDIA GPU, but you are using a CPU image."
-                "Consider using a GPU image for better performance."
-            )
+            LOGGER.warning("\t+ You are running on a NVIDIA GPU system but using a CPU image.")
+
+        if self.pooling is None:
+            LOGGER.warning("\t+ Pooling strategy not provided. Defaulting to 'cls' pooling.")
+            self.pooling = "cls"
 
 
 class TEI(InferenceServer):

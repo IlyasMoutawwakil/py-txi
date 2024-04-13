@@ -4,17 +4,18 @@ import re
 import time
 from abc import ABC
 from dataclasses import asdict, dataclass, field
-from logging import INFO, basicConfig, getLogger
+from logging import INFO, getLogger
 from typing import Any, Dict, List, Optional, Union
 
+import coloredlogs
 import docker
 import docker.errors
 import docker.types
 from huggingface_hub import AsyncInferenceClient
 
-from .utils import get_free_port
+from .utils import get_free_port, styled_logs
 
-basicConfig(level=INFO)
+coloredlogs.install(level=INFO, fmt="[%(asctime)s][%(filename)s][%(levelname)s] %(message)s")
 
 DOCKER = docker.from_env()
 LOGGER = getLogger("Inference-Server")
@@ -22,26 +23,29 @@ LOGGER = getLogger("Inference-Server")
 
 @dataclass
 class InferenceServerConfig:
+    # Common options
+    model_id: str
+    revision: Optional[str] = "main"
     # Image to use for the container
-    image: str
+    image: Optional[str] = None
     # Shared memory size for the container
-    shm_size: str = "1g"
+    shm_size: Optional[str] = None
     # List of custom devices to forward to the container e.g. ["/dev/kfd", "/dev/dri"] for ROCm
     devices: Optional[List[str]] = None
     # NVIDIA-docker GPU device options e.g. "all" (all) or "0,1,2,3" (ids) or 4 (count)
     gpus: Optional[Union[str, int]] = None
 
     ports: Dict[str, Any] = field(
-        default_factory=lambda: {"80/tcp": ("127.0.0.1", 0)},
+        default_factory=lambda: {"80/tcp": ("0.0.0.0", 0)},
         metadata={"help": "Dictionary of ports to expose from the container."},
     )
     volumes: Dict[str, Any] = field(
         default_factory=lambda: {os.path.expanduser("~/.cache/huggingface/hub"): {"bind": "/data", "mode": "rw"}},
         metadata={"help": "Dictionary of volumes to mount inside the container."},
     )
-    environment: Dict[str, str] = field(
-        default_factory=lambda: {"HUGGINGFACE_HUB_TOKEN": os.environ.get("HUGGINGFACE_HUB_TOKEN", "")},
-        metadata={"help": "Dictionary of environment variables to forward to the container."},
+    environment: List[str] = field(
+        default_factory=lambda: ["HUGGINGFACE_HUB_TOKEN"],
+        metadata={"help": "List of environment variables to forward to the container."},
     )
 
     max_concurrent_requests: Optional[int] = None
@@ -51,6 +55,10 @@ class InferenceServerConfig:
         if self.ports["80/tcp"][1] == 0:
             LOGGER.info("\t+ Getting a free port for the server")
             self.ports["80/tcp"] = (self.ports["80/tcp"][0], get_free_port())
+
+        if self.shm_size is None:
+            LOGGER.warning("\t+ Shared memory size not provided. Defaulting to '1g'.")
+            self.shm_size = "1g"
 
 
 class InferenceServer(ABC):
@@ -97,8 +105,15 @@ class InferenceServer(ABC):
                 else:
                     self.command.append(f"--{k.replace('_', '-')}={str(v).lower()}")
 
-        address, port = self.config.ports["80/tcp"]
-        self.url = f"http://{address}:{port}"
+        self.command.append("--json-output")
+
+        LOGGER.info(f"\t+ Building {self.NAME} environment")
+        self.environment = {}
+        for key in self.config.environment:
+            if key in os.environ:
+                self.environment[key] = os.environ[key]
+            else:
+                LOGGER.warning(f"\t+ Environment variable {key} not found in the system")
 
         LOGGER.info(f"\t+ Running {self.NAME} container")
         self.container = DOCKER.containers.run(
@@ -107,7 +122,7 @@ class InferenceServer(ABC):
             volumes=self.config.volumes,
             devices=self.config.devices,
             shm_size=self.config.shm_size,
-            environment=self.config.environment,
+            environment=self.environment,
             device_requests=self.device_requests,
             command=self.command,
             auto_remove=True,
@@ -117,14 +132,19 @@ class InferenceServer(ABC):
         LOGGER.info(f"\t+ Streaming {self.NAME} server logs")
         for line in self.container.logs(stream=True):
             log = line.decode("utf-8").strip()
+            log = styled_logs(log)
+
             if self.SUCCESS_SENTINEL.lower() in log.lower():
-                LOGGER.info(f"\t {log}")
+                LOGGER.info(f"\t+ {log}")
                 break
             elif self.FAILURE_SENTINEL.lower() in log.lower():
-                LOGGER.info(f"\t {log}")
+                LOGGER.info(f"\t+ {log}")
                 raise Exception(f"{self.NAME} server failed to start")
             else:
-                LOGGER.info(f"\t {log}")
+                LOGGER.info(f"\t+ {log}")
+
+        address, port = self.config.ports["80/tcp"]
+        self.url = f"http://{address}:{port}"
 
         try:
             asyncio.set_event_loop(asyncio.get_event_loop())

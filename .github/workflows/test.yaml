@@ -31,4 +31,4 @@ jobs:
 
       - name: Run test
         run: |
-          make test
+          make test_cpu

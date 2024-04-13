@@ -4,25 +4,21 @@ from logging import getLogger
 from typing import Literal, Optional, Union
 
 from .inference_server import InferenceServer, InferenceServerConfig
-from .utils import is_rocm_system
+from .utils import is_nvidia_system, is_rocm_system
 
 LOGGER = getLogger("Text-Generation-Inference")
 
 Shareded_Literal = Literal["true", "false"]
 DType_Literal = Literal["float32", "float16", "bfloat16"]
-Quantize_Literal = Literal["bitsandbytes-nf4", "bitsandbytes-fp4", "gptq"]
+Quantize_Literal = Literal["bitsandbytes-nf4", "bitsandbytes-fp4", "gptq", "awq", "eetq", "fp8"]
 
 
 @dataclass
 class TGIConfig(InferenceServerConfig):
-    # Docker options
-    image: str = "ghcr.io/huggingface/text-generation-inference:latest"
     # Launcher options
-    model_id: str = "gpt2"
-    revision: str = "main"
     num_shard: Optional[int] = None
+    cuda_graphs: Optional[int] = None
     dtype: Optional[DType_Literal] = None
-    enable_cuda_graphs: Optional[bool] = None
     sharded: Optional[Shareded_Literal] = None
     quantize: Optional[Quantize_Literal] = None
     disable_custom_kernels: Optional[bool] = None
@@ -33,12 +29,21 @@ class TGIConfig(InferenceServerConfig):
     def __post_init__(self) -> None:
         super().__post_init__()
 
+        if self.image is None:
+            if is_nvidia_system() and self.gpus is not None:
+                LOGGER.info("\t+ Using the latest NVIDIA GPU image for Text-Generation-Inference")
+                self.image = "ghcr.io/huggingface/text-generation-inference:latest"
+            elif is_rocm_system() and self.devices is not None:
+                LOGGER.info("\t+ Using the latest ROCm AMD GPU image for Text-Generation-Inference")
+                self.image = "ghcr.io/huggingface/text-generation-inference:latest-rocm"
+            else:
+                raise ValueError(
+                    "Unsupported system. Please either provide the image to use explicitly "
+                    "or use a supported system (NVIDIA/ROCm) while specifying gpus/devices."
+                )
+
         if is_rocm_system() and "rocm" not in self.image:
-            LOGGER.warning(
-                "You are running on a ROCm system but the image is not rocm specific. "
-                "Add 'rocm' to the image name to use the rocm specific image."
-            )
-            self.image += "-rocm"
+            LOGGER.warning("\t+ You are running on a ROCm AMD GPU system but using a non-ROCM image.")
 
 
 class TGI(InferenceServer):

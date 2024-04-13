@@ -9,8 +9,11 @@ style:
 	ruff format .
 	ruff check --fix .
 
-test:
-	pytest tests/ -x
+test_cpu:
+	pytest tests/ -s -x -k "cpu"
+
+test_gpu:
+	pytest tests/ -s -x -k "gpu"
 
 install:
 	pip install -e .
