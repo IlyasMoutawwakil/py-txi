@@ -35,7 +35,7 @@ class InferenceServerConfig:
     gpus: Optional[Union[str, int]] = None
 
     ports: Dict[str, Any] = field(
-        default_factory=lambda: {"80/tcp": ("127.0.0.1", 0)},
+        default_factory=lambda: {"80/tcp": ("0.0.0.0", 0)},
         metadata={"help": "Dictionary of ports to expose from the container."},
     )
     volumes: Dict[str, Any] = field(
