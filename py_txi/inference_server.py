@@ -4,18 +4,15 @@ import re
 import time
 from abc import ABC
 from dataclasses import asdict, dataclass, field
-from logging import INFO, getLogger
+from logging import getLogger
 from typing import Any, Dict, List, Optional, Union
 
-import coloredlogs
 import docker
 import docker.errors
 import docker.types
 from huggingface_hub import AsyncInferenceClient
 
 from .utils import get_free_port, styled_logs
-
-coloredlogs.install(level=INFO, fmt="[%(asctime)s][%(filename)s][%(levelname)s] %(message)s")
 
 DOCKER = docker.from_env()
 LOGGER = getLogger("Inference-Server")
