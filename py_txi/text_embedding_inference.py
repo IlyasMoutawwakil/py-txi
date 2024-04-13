@@ -34,12 +34,12 @@ class TEIConfig(InferenceServerConfig):
                 LOGGER.info("\t+ Using the latest CPU image for Text-Embedding-Inference")
                 self.image = "ghcr.io/huggingface/text-embeddings-inference:cpu-latest"
 
-        if self.pooling is None:
-            LOGGER.warning("Pooling strategy not provided. Defaulting to 'cls' pooling.")
-            self.pooling = "cls"
-
         if is_nvidia_system() and "cpu" in self.image:
-            LOGGER.warning("You are running on a NVIDIA GPU system but using a CPU image.")
+            LOGGER.warning("\t+ You are running on a NVIDIA GPU system but using a CPU image.")
+
+        if self.pooling is None:
+            LOGGER.warning("\t+ Pooling strategy not provided. Defaulting to 'cls' pooling.")
+            self.pooling = "cls"
 
 
 class TEI(InferenceServer):

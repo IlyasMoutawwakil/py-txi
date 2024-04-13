@@ -4,17 +4,18 @@ import re
 import time
 from abc import ABC
 from dataclasses import asdict, dataclass, field
-from logging import INFO, basicConfig, getLogger
+from logging import INFO, getLogger
 from typing import Any, Dict, List, Optional, Union
 
+import coloredlogs
 import docker
 import docker.errors
 import docker.types
 from huggingface_hub import AsyncInferenceClient
 
-from .utils import colored_json_logs, get_free_port
+from .utils import get_free_port, styled_logs
 
-basicConfig(level=INFO)
+coloredlogs.install(level=INFO, fmt="[%(asctime)s][%(filename)s][%(levelname)s] %(message)s")
 
 DOCKER = docker.from_env()
 LOGGER = getLogger("Inference-Server")
@@ -54,6 +55,10 @@ class InferenceServerConfig:
         if self.ports["80/tcp"][1] == 0:
             LOGGER.info("\t+ Getting a free port for the server")
             self.ports["80/tcp"] = (self.ports["80/tcp"][0], get_free_port())
+
+        if self.shm_size is None:
+            LOGGER.warning("\t+ Shared memory size not provided. Defaulting to '1g'.")
+            self.shm_size = "1g"
 
 
 class InferenceServer(ABC):
@@ -127,7 +132,7 @@ class InferenceServer(ABC):
         LOGGER.info(f"\t+ Streaming {self.NAME} server logs")
         for line in self.container.logs(stream=True):
             log = line.decode("utf-8").strip()
-            log = colored_json_logs(log)
+            log = styled_logs(log)
 
             if self.SUCCESS_SENTINEL.lower() in log.lower():
                 LOGGER.info(f"\t+ {log}")

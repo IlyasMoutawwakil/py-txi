@@ -24,7 +24,7 @@ setup(
     name="py-txi",
     version=PY_TXI_VERSION,
     packages=find_packages(),
-    install_requires=["docker", "huggingface-hub", "numpy", "aiohttp"],
+    install_requires=["docker", "huggingface-hub", "numpy", "aiohttp", "coloredlogs"],
     extras_require={"quality": ["ruff"], "testing": ["pytest"]},
     **common_setup_kwargs,
 )

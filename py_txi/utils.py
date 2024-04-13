@@ -1,5 +1,6 @@
 import socket
 import subprocess
+from datetime import datetime
 from json import loads
 
 
@@ -25,21 +26,24 @@ def is_nvidia_system() -> bool:
         return False
 
 
-LEVEL_TO_COLOR = {
-    "DEBUG": "0;34m",
-    "INFO": "0;32m",
-    "WARNING": "0;33m",
-    "WARN": "0;33m",
-    "ERROR": "0;31m",
-    "CRITICAL": "0;31m",
+LEVEL_TO_MESSAGE_STYLE = {
+    "DEBUG": "\033[37m",
+    "INFO": "\033[37m",
+    "WARN": "\033[33m",
+    "WARNING": "\033[33m",
+    "ERROR": "\033[31m",
+    "CRITICAL": "\033[31m",
 }
+TIMESTAMP_STYLE = "\033[32m"
+TARGET_STYLE = "\033[0;38"
+LEVEL_STYLE = "\033[1;30m"
 
 
 def color_text(text: str, color: str) -> str:
-    return f"\033[{color}{text}\033[0m"
+    return f"{color}{text}\033[0m"
 
 
-def colored_json_logs(log: str) -> str:
+def styled_logs(log: str) -> str:
     dict_log = loads(log)
 
     fields = dict_log.get("fields", {})
@@ -47,10 +51,11 @@ def colored_json_logs(log: str) -> str:
     target = dict_log.get("target", "could not parse target")
     timestamp = dict_log.get("timestamp", "could not parse timestamp")
     message = fields.get("message", dict_log.get("message", "could not parse message"))
+    timestamp = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d %H:%M:%S")
 
-    color = LEVEL_TO_COLOR.get(level, "0;37m")
+    message = color_text(message, LEVEL_TO_MESSAGE_STYLE.get(level, "\033[37m"))
+    timestamp = color_text(timestamp, TIMESTAMP_STYLE)
+    target = color_text(target, TARGET_STYLE)
+    level = color_text(level, LEVEL_STYLE)
 
-    level = color_text(level, color)
-    message = color_text(message, color)
-
-    return f"[{timestamp}][{level}][{target}] - {message}"
+    return f"[{timestamp}][{target}][{level}] - {message}"

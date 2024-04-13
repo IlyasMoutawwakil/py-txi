@@ -43,7 +43,7 @@ class TGIConfig(InferenceServerConfig):
                 )
 
         if is_rocm_system() and "rocm" not in self.image:
-            LOGGER.warning("You are running on a ROCm AMD GPU system but using a non-ROCM image.")
+            LOGGER.warning("\t+ You are running on a ROCm AMD GPU system but using a non-ROCM image.")
 
 
 class TGI(InferenceServer):
