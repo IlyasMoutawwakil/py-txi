@@ -17,6 +17,14 @@ pip install py-txi
 
 Py-TXI is designed to be used in a similar way to Transformers API. We use `docker-py` (instead of a dirty `subprocess` solution) so that the containers you run are linked to the main process and are stopped automatically when your code finishes or fails.
 
+## Advantages
+
+- **Easy to use**: Py-TXI is designed to be used in a similar way to Transformers API.
+- **Automatic cleanup**: Py-TXI stops the Docker container when your code finishes or fails.
+- **Batched inference**: Py-TXI supports sending a batch of inputs to the server for inference.
+- **Configurable**: Py-TXI allows you to configure the Inference servers using a simple configuration object.
+- **Verbose**: Py-TXI streams the logs of the underlying Docker container to the main process so you can debug easily.
+
 ## Usage
 
 Here's an example of how to use it:
