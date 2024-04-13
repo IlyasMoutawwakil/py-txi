@@ -12,7 +12,7 @@ import docker.errors
 import docker.types
 from huggingface_hub import AsyncInferenceClient
 
-from .utils import get_free_port
+from .utils import colored_json_logs, get_free_port
 
 basicConfig(level=INFO)
 
@@ -22,10 +22,13 @@ LOGGER = getLogger("Inference-Server")
 
 @dataclass
 class InferenceServerConfig:
+    # Common options
+    model_id: str
+    revision: Optional[str] = "main"
     # Image to use for the container
-    image: str
+    image: Optional[str] = None
     # Shared memory size for the container
-    shm_size: str = "1g"
+    shm_size: Optional[str] = None
     # List of custom devices to forward to the container e.g. ["/dev/kfd", "/dev/dri"] for ROCm
     devices: Optional[List[str]] = None
     # NVIDIA-docker GPU device options e.g. "all" (all) or "0,1,2,3" (ids) or 4 (count)
@@ -39,9 +42,9 @@ class InferenceServerConfig:
         default_factory=lambda: {os.path.expanduser("~/.cache/huggingface/hub"): {"bind": "/data", "mode": "rw"}},
         metadata={"help": "Dictionary of volumes to mount inside the container."},
     )
-    environment: Dict[str, str] = field(
-        default_factory=lambda: {"HUGGINGFACE_HUB_TOKEN": os.environ.get("HUGGINGFACE_HUB_TOKEN", "")},
-        metadata={"help": "Dictionary of environment variables to forward to the container."},
+    environment: List[str] = field(
+        default_factory=lambda: ["HUGGINGFACE_HUB_TOKEN"],
+        metadata={"help": "List of environment variables to forward to the container."},
     )
 
     max_concurrent_requests: Optional[int] = None
@@ -97,8 +100,15 @@ class InferenceServer(ABC):
                 else:
                     self.command.append(f"--{k.replace('_', '-')}={str(v).lower()}")
 
-        address, port = self.config.ports["80/tcp"]
-        self.url = f"http://{address}:{port}"
+        self.command.append("--json-output")
+
+        LOGGER.info(f"\t+ Building {self.NAME} environment")
+        self.environment = {}
+        for key in self.config.environment:
+            if key in os.environ:
+                self.environment[key] = os.environ[key]
+            else:
+                LOGGER.warning(f"\t+ Environment variable {key} not found in the system")
 
         LOGGER.info(f"\t+ Running {self.NAME} container")
         self.container = DOCKER.containers.run(
@@ -107,7 +117,7 @@ class InferenceServer(ABC):
             volumes=self.config.volumes,
             devices=self.config.devices,
             shm_size=self.config.shm_size,
-            environment=self.config.environment,
+            environment=self.environment,
             device_requests=self.device_requests,
             command=self.command,
             auto_remove=True,
@@ -117,6 +127,8 @@ class InferenceServer(ABC):
         LOGGER.info(f"\t+ Streaming {self.NAME} server logs")
         for line in self.container.logs(stream=True):
             log = line.decode("utf-8").strip()
+            log = colored_json_logs(log)
+
             if self.SUCCESS_SENTINEL.lower() in log.lower():
                 LOGGER.info(f"\t {log}")
                 break
@@ -125,6 +137,9 @@ class InferenceServer(ABC):
                 raise Exception(f"{self.NAME} server failed to start")
             else:
                 LOGGER.info(f"\t {log}")
+
+        address, port = self.config.ports["80/tcp"]
+        self.url = f"http://{address}:{port}"
 
         try:
             asyncio.set_event_loop(asyncio.get_event_loop())

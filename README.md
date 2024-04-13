@@ -24,18 +24,18 @@ Here's an example of how to use it:
 ```python
 from py_txi import TGI, TGIConfig
 
-llm = TGI(config=TGIConfig(sharded="false"))
+llm = TGI(config=TGIConfig(model_id="bigscience/bloom-560m", gpus="0"))
 output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
 print("LLM:", output)
 llm.close()
 ```
 
-Output: ```LLM: ["er. I'm a language modeler. I'm a language modeler. I'm a language", " I'm fine, how are you? I'm fine, how are you? I'm fine,"]```
+Output: ```LLM: [' student. I have a problem with the following code. I have a class that has a method that', '"\n\n"I\'m fine," said the girl, "but I don\'t want to be alone.']```
 
 ```python
 from py_txi import TEI, TEIConfig
 
-embed = TEI(config=TEIConfig(pooling="cls"))
+embed = TEI(config=TEIConfig(model_id="bert-base-uncased", pooling="cls"))
 output = embed.encode(["Hi, I'm an embedding model", "I'm fine, how are you?"])
 print("Embed:", output)
 embed.close()
