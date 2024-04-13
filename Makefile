@@ -10,10 +10,10 @@ style:
 	ruff check --fix .
 
 test_cpu:
-	pytest tests/ -x "cpu"
+	pytest tests/ -s -x -k "cpu"
 
 test_gpu:
-	pytest tests/ -x "gpu"
+	pytest tests/ -s -x -k "gpu"
 
 install:
 	pip install -e .
