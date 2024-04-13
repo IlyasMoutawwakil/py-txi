@@ -7,7 +7,7 @@ print(len(output))
 print("LLM:", output)
 llm.close()
 
-embed = TEI(config=TEIConfig(model_id="bert-base-uncased", pooling="cls"))
+embed = TEI(config=TEIConfig(model_id="BAAI/bge-base-en-v1.5"))
 output = embed.encode(["Hi, I'm an embedding model", "I'm fine, how are you?"])
 print(len(output))
 print("Embed:", output)

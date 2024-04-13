@@ -28,14 +28,18 @@ class TEIConfig(InferenceServerConfig):
 
         if self.image is None:
             if is_nvidia_system() and self.gpus is not None:
-                LOGGER.info("\t+ Using the lates NVIDIA GPU image for Text-Embedding-Inference")
+                LOGGER.info("\t+ Using the latest NVIDIA GPU image for Text-Embedding-Inference")
                 self.image = "ghcr.io/huggingface/text-embeddings-inference:latest"
             else:
-                LOGGER.info("\t+ Using the lates CPU image for Text-Embedding-Inference")
+                LOGGER.info("\t+ Using the latest CPU image for Text-Embedding-Inference")
                 self.image = "ghcr.io/huggingface/text-embeddings-inference:cpu-latest"
 
+        if self.pooling is None:
+            LOGGER.warning("Pooling strategy not provided. Defaulting to 'cls' pooling.")
+            self.pooling = "cls"
+
         if is_nvidia_system() and "cpu" in self.image:
-            LOGGER.warning("You are running on a NVIDIA GPU system but the image is CPU specific.")
+            LOGGER.warning("You are running on a NVIDIA GPU system but using a CPU image.")
 
 
 class TEI(InferenceServer):

@@ -130,13 +130,13 @@ class InferenceServer(ABC):
             log = colored_json_logs(log)
 
             if self.SUCCESS_SENTINEL.lower() in log.lower():
-                LOGGER.info(f"\t {log}")
+                LOGGER.info(f"\t+ {log}")
                 break
             elif self.FAILURE_SENTINEL.lower() in log.lower():
-                LOGGER.info(f"\t {log}")
+                LOGGER.info(f"\t+ {log}")
                 raise Exception(f"{self.NAME} server failed to start")
             else:
-                LOGGER.info(f"\t {log}")
+                LOGGER.info(f"\t+ {log}")
 
         address, port = self.config.ports["80/tcp"]
         self.url = f"http://{address}:{port}"
