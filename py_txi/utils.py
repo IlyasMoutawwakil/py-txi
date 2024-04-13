@@ -2,9 +2,6 @@ import socket
 import subprocess
 from datetime import datetime
 from json import loads
-from logging import INFO
-
-import coloredlogs
 
 
 def get_free_port() -> int:
@@ -38,7 +35,7 @@ LEVEL_TO_MESSAGE_STYLE = {
     "CRITICAL": "\033[31m",
 }
 TIMESTAMP_STYLE = "\033[32m"
-TARGET_STYLE = "\033[0;38"
+TARGET_STYLE = "\033[0;38m"
 LEVEL_STYLE = "\033[1;30m"
 
 
@@ -62,7 +59,3 @@ def styled_logs(log: str) -> str:
     level = color_text(level, LEVEL_STYLE)
 
     return f"[{timestamp}][{target}][{level}] - {message}"
-
-
-def setup_logging():
-    coloredlogs.install(level=INFO, fmt="[%(asctime)s][%(filename)s][%(levelname)s] %(message)s")

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import re
 import time
@@ -16,6 +17,7 @@ from .utils import get_free_port, styled_logs
 
 DOCKER = docker.from_env()
 LOGGER = getLogger("Inference-Server")
+logging.basicConfig(level=logging.INFO)
 
 
 @dataclass
