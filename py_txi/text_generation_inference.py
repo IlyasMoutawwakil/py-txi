@@ -16,7 +16,7 @@ Quantize_Literal = Literal["bitsandbytes-nf4", "bitsandbytes-fp4", "gptq"]
 @dataclass
 class TGIConfig(InferenceServerConfig):
     # Docker options
-    image: str = "ghcr.io/huggingface/text-generation-inference:latest"
+    image: str = "ghcr.io/huggingface/text-generation-inference:1.4.5-rocm"
     # Launcher options
     model_id: str = "gpt2"
     revision: str = "main"
