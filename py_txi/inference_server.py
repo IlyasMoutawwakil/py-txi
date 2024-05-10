@@ -12,6 +12,7 @@ import docker
 import docker.errors
 import docker.types
 from huggingface_hub import AsyncInferenceClient
+from huggingface_hub.constants import HUGGINGFACE_HUB_CACHE
 
 from .utils import get_free_port, styled_logs
 
@@ -23,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 @dataclass
 class InferenceServerConfig:
     # Common options
-    model_id: str
+    model_id: Optional[str] = None
     revision: Optional[str] = "main"
     # Image to use for the container
     image: Optional[str] = None
@@ -39,7 +40,7 @@ class InferenceServerConfig:
         metadata={"help": "Dictionary of ports to expose from the container."},
     )
     volumes: Dict[str, Any] = field(
-        default_factory=lambda: {os.path.expanduser("~/.cache/huggingface/hub"): {"bind": "/data", "mode": "rw"}},
+        default_factory=lambda: {HUGGINGFACE_HUB_CACHE: {"bind": "/data", "mode": "rw"}},
         metadata={"help": "Dictionary of volumes to mount inside the container."},
     )
     environment: List[str] = field(
@@ -94,8 +95,10 @@ class InferenceServer(ABC):
             self.device_requests = None
 
         LOGGER.info(f"\t+ Building {self.NAME} command")
-        self.command = ["--model-id", self.config.model_id]
+        self.command = []
 
+        if self.config.model_id is not None:
+            self.command = ["--model-id", self.config.model_id]
         if self.config.revision is not None:
             self.command.extend(["--revision", self.config.revision])
 
@@ -103,7 +106,7 @@ class InferenceServer(ABC):
             if k in InferenceServerConfig.__annotations__:
                 continue
             elif v is not None:
-                if isinstance(v, bool):
+                if isinstance(v, bool) and not k == "sharded":
                     self.command.append(f"--{k.replace('_', '-')}")
                 else:
                     self.command.append(f"--{k.replace('_', '-')}={str(v).lower()}")
@@ -179,16 +182,19 @@ class InferenceServer(ABC):
     def close(self) -> None:
         if hasattr(self, "container"):
             LOGGER.info("\t+ Stoping Docker container")
-            self.container.stop()
-            self.container.wait()
+            if self.container.status == "running":
+                self.container.stop()
+                self.container.wait()
             LOGGER.info("\t+ Docker container stopped")
             del self.container
 
         if hasattr(self, "semaphore"):
-            self.semaphore
+            if self.semaphore.locked():
+                self.semaphore.release()
             del self.semaphore
 
         if hasattr(self, "client"):
+            self.client
             del self.client
 
     def __del__(self) -> None:

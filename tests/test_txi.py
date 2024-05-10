@@ -12,9 +12,8 @@ def test_cpu_tei():
     embed.close()
 
 
-# tested locally with gpu
-def test_gpu_tgi():
-    llm = TGI(config=TGIConfig(model_id="bigscience/bloom-560m", gpus="0"))
+def test_cpu_tgi():
+    llm = TGI(config=TGIConfig(model_id="bigscience/bloom-560m"))
     output = llm.generate("Hi, I'm a sanity test")
     assert isinstance(output, str)
     output = llm.generate(["Hi, I'm a sanity test", "I'm a second sentence"])

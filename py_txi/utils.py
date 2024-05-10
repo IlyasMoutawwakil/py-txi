@@ -44,7 +44,10 @@ def color_text(text: str, color: str) -> str:
 
 
 def styled_logs(log: str) -> str:
-    dict_log = loads(log)
+    try:
+        dict_log = loads(log)
+    except Exception:
+        return log
 
     fields = dict_log.get("fields", {})
     level = dict_log.get("level", "could not parse level")

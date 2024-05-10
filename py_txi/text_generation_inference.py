@@ -38,10 +38,8 @@ class TGIConfig(InferenceServerConfig):
                 LOGGER.info("\t+ Using the latest ROCm AMD GPU image for Text-Generation-Inference")
                 self.image = "ghcr.io/huggingface/text-generation-inference:latest-rocm"
             else:
-                raise ValueError(
-                    "Unsupported system. Please either provide the image to use explicitly "
-                    "or use a supported system (NVIDIA/ROCm) while specifying gpus/devices."
-                )
+                LOGGER.info("\t+ Using the version 1.4 since it's the last image supporting CPU")
+                self.image = "ghcr.io/huggingface/text-generation-inference:1.4"
 
         if is_rocm_system() and "rocm" not in self.image:
             LOGGER.warning("\t+ You are running on a ROCm AMD GPU system but using a non-ROCM image.")

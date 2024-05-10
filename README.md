@@ -1,4 +1,4 @@
-# Py-TXI (previously Py-TGI)
+# Py-TXI
 
 [![PyPI version](https://badge.fury.io/py/py-txi.svg)](https://badge.fury.io/py/py-txi)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/py-txi)](https://pypi.org/project/py-txi/)
