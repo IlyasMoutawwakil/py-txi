@@ -32,13 +32,13 @@ class TGIConfig(InferenceServerConfig):
 
         if self.image is None:
             if is_nvidia_system() and self.gpus is not None:
-                LOGGER.info("\t+ Using the latest NVIDIA GPU image for Text-Generation-Inference")
+                LOGGER.info("\t+ Using latest NVIDIA GPU image for Text-Generation-Inference")
                 self.image = "ghcr.io/huggingface/text-generation-inference:latest"
             elif is_rocm_system() and self.devices is not None:
-                LOGGER.info("\t+ Using the latest ROCm AMD GPU image for Text-Generation-Inference")
+                LOGGER.info("\t+ Using latest ROCm AMD GPU image for Text-Generation-Inference")
                 self.image = "ghcr.io/huggingface/text-generation-inference:latest-rocm"
             else:
-                LOGGER.info("\t+ Using the version 1.4 since it's the last image supporting CPU")
+                LOGGER.info("\t+ Using version 1.4 image for Text-Generation-Inference (last image with CPU support)")
                 self.image = "ghcr.io/huggingface/text-generation-inference:1.4"
 
         if is_rocm_system() and "rocm" not in self.image:

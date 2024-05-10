@@ -194,7 +194,6 @@ class InferenceServer(ABC):
             del self.semaphore
 
         if hasattr(self, "client"):
-            self.client
             del self.client
 
     def __del__(self) -> None:
