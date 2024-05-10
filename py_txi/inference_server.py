@@ -94,7 +94,11 @@ class InferenceServer(ABC):
             self.device_requests = None
 
         LOGGER.info(f"\t+ Building {self.NAME} command")
-        self.command = []
+        self.command = ["--model-id", self.config.model_id]
+
+        if self.config.revision is not None:
+            self.command.extend(["--revision", self.config.revision])
+
         for k, v in asdict(self.config).items():
             if k in InferenceServerConfig.__annotations__:
                 continue
