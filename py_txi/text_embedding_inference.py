@@ -31,8 +31,8 @@ class TEIConfig(InferenceServerConfig):
                 LOGGER.info("\t+ Using the latest NVIDIA GPU image for Text-Embedding-Inference")
                 self.image = "ghcr.io/huggingface/text-embeddings-inference:latest"
             else:
-                LOGGER.info("\t+ Using the latest CPU image for Text-Embedding-Inference")
-                self.image = "ghcr.io/huggingface/text-embeddings-inference:cpu-latest"
+                LOGGER.info("\t+ Using version 1.4 image for Text-Embedding-Inference")
+                self.image = "ghcr.io/huggingface/text-embeddings-inference:cpu-1.4"
 
         if is_nvidia_system() and "cpu" in self.image:
             LOGGER.warning("\t+ You are running on a NVIDIA GPU system but using a CPU image.")
