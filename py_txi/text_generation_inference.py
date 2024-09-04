@@ -48,7 +48,7 @@ class TGIConfig(InferenceServerConfig):
 class TGI(InferenceServer):
     NAME: str = "Text-Generation-Inference"
     SUCCESS_SENTINEL: str = "Connected"
-    FAILURE_SENTINEL: str = "Error"
+    FAILURE_SENTINEL: str = "Traceback"
 
     def __init__(self, config: TGIConfig) -> None:
         super().__init__(config)

@@ -144,8 +144,7 @@ class InferenceServer(ABC):
                 LOGGER.info(f"\t+ {log}")
                 break
             elif self.FAILURE_SENTINEL.lower() in log.lower():
-                LOGGER.info(f"\t+ {log}")
-                raise Exception(f"{self.NAME} server failed to start")
+                raise Exception(f"{self.NAME} server failed to start with failure message: {log}")
             else:
                 LOGGER.info(f"\t+ {log}")
 
