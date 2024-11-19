@@ -180,11 +180,12 @@ class InferenceServer(ABC):
 
     def close(self) -> None:
         if hasattr(self, "container"):
-            LOGGER.info("\t+ Stoping Docker container")
-            if self.container.status == "running":
-                self.container.stop()
-                self.container.wait()
-            LOGGER.info("\t+ Docker container stopped")
+            container = DOCKER.containers.get(self.container.id)
+            if container.status == "running":
+                LOGGER.info("\t+ Stoping Docker container")
+                container.stop()
+                container.wait()
+                LOGGER.info("\t+ Docker container stopped")
             del self.container
 
         if hasattr(self, "semaphore"):
