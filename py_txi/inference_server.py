@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 class InferenceServerConfig:
     # Common options
     model_id: Optional[str] = None
-    revision: Optional[str] = "main"
+    revision: Optional[str] = None
     # Image to use for the container
     image: Optional[str] = None
     # Shared memory size for the container
