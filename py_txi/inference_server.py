@@ -131,7 +131,6 @@ class InferenceServer(ABC):
             environment=self.environment,
             device_requests=self.device_requests,
             command=self.command,
-            user=os.getuid(),
             auto_remove=True,
             detach=True,
         )
