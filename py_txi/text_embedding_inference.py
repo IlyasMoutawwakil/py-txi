@@ -20,6 +20,7 @@ class TEIConfig(InferenceServerConfig):
     # Launcher options
     dtype: Optional[DType_Literal] = None
     pooling: Optional[Pooling_Literal] = None
+
     # Concurrency options
     max_concurrent_requests: int = 512
 
@@ -32,7 +33,7 @@ class TEIConfig(InferenceServerConfig):
                 self.image = "ghcr.io/huggingface/text-embeddings-inference:cuda-latest"
             else:
                 LOGGER.info("\t+ Using CPU image version 1.4 for Text-Embedding-Inference (before onnx backend)")
-                self.image = "ghcr.io/huggingface/text-embeddings-inference:cpu-1.4"
+                self.image = "ghcr.io/huggingface/text-embeddings-inference:cpu-1.6.0"
 
         if is_nvidia_system() and "cpu" in self.image:
             LOGGER.warning("\t+ You are running on a NVIDIA GPU system but using a CPU image.")

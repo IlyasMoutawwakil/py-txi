@@ -20,10 +20,11 @@ class TGIConfig(InferenceServerConfig):
     speculate: Optional[int] = None
     cuda_graphs: Optional[int] = None
     dtype: Optional[DType_Literal] = None
+    trust_remote_code: Optional[bool] = None
     sharded: Optional[Shareded_Literal] = None
     quantize: Optional[Quantize_Literal] = None
     disable_custom_kernels: Optional[bool] = None
-    trust_remote_code: Optional[bool] = None
+
     # Concurrency options
     max_concurrent_requests: int = 128
 
@@ -38,8 +39,8 @@ class TGIConfig(InferenceServerConfig):
                 LOGGER.info("\t+ Using image version 3.0.1-rocm for Text-Generation-Inference")
                 self.image = "ghcr.io/huggingface/text-generation-inference:3.0.1-rocm"
             else:
-                LOGGER.info("\t+ Using image version 3.0 for Text-Generation-Inference")
-                self.image = "ghcr.io/huggingface/text-generation-inference:3.0"
+                LOGGER.info("\t+ Using image version 2.4.1 for Text-Generation-Inference")
+                self.image = "ghcr.io/huggingface/text-generation-inference:2.4.1"
 
         if is_rocm_system() and "rocm" not in self.image:
             LOGGER.warning("\t+ You are running on a ROCm AMD GPU system but using a non-ROCM image.")
