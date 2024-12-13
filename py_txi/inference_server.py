@@ -25,7 +25,8 @@ logging.basicConfig(level=logging.INFO)
 class InferenceServerConfig:
     # Common options
     model_id: Optional[str] = None
-    revision: Optional[str] = "main"
+    revision: Optional[str] = None
+
     # Image to use for the container
     image: Optional[str] = None
     # Shared memory size for the container
@@ -34,7 +35,6 @@ class InferenceServerConfig:
     devices: Optional[List[str]] = None
     # NVIDIA-docker GPU device options e.g. "all" (all) or "0,1,2,3" (ids) or 4 (count)
     gpus: Optional[Union[str, int]] = None
-
     ports: Dict[str, Any] = field(
         default_factory=lambda: {"80/tcp": ("0.0.0.0", 0)},
         metadata={"help": "Dictionary of ports to expose from the container."},
@@ -48,8 +48,9 @@ class InferenceServerConfig:
         metadata={"help": "List of environment variables to forward to the container."},
     )
 
-    max_concurrent_requests: Optional[int] = None
-    timeout: int = 60
+    # first connection/request
+    connection_timeout: int = 60
+    first_request_timeout: int = 60
 
     def __post_init__(self) -> None:
         if self.ports["80/tcp"][1] == 0:
@@ -70,11 +71,11 @@ class InferenceServer(ABC):
         self.config = config
 
         try:
-            LOGGER.info(f"\t+ Checking if {self.NAME} image is available locally")
+            LOGGER.info("\t+ Checking if server image is available locally")
             DOCKER.images.get(self.config.image)
-            LOGGER.info(f"\t+ {self.NAME} image found locally")
+            LOGGER.info("\t+ Server image found locally")
         except docker.errors.ImageNotFound:
-            LOGGER.info(f"\t+ {self.NAME} image not found locally, pulling from Docker Hub")
+            LOGGER.info("\t+ Server image not found locally, pulling it from Docker Hub")
             DOCKER.images.pull(self.config.image)
 
         if self.config.gpus is not None and isinstance(self.config.gpus, str) and self.config.gpus == "all":
@@ -94,34 +95,33 @@ class InferenceServer(ABC):
             LOGGER.info("\t+ Not using any GPU(s)")
             self.device_requests = None
 
-        LOGGER.info(f"\t+ Building {self.NAME} command")
         self.command = []
-
+        LOGGER.info("\t+ Building launcher command")
         if self.config.model_id is not None:
-            self.command = ["--model-id", self.config.model_id]
+            self.command.append(f"--model-id={self.config.model_id}")
         if self.config.revision is not None:
-            self.command.extend(["--revision", self.config.revision])
+            self.command.append(f"--revision={self.config.revision}")
 
         for k, v in asdict(self.config).items():
             if k in InferenceServerConfig.__annotations__:
                 continue
-            elif v is not None:
-                if isinstance(v, bool) and not k == "sharded":
+            if v is not None:
+                if isinstance(v, bool):
                     self.command.append(f"--{k.replace('_', '-')}")
                 else:
                     self.command.append(f"--{k.replace('_', '-')}={str(v).lower()}")
 
         self.command.append("--json-output")
 
-        LOGGER.info(f"\t+ Building {self.NAME} environment")
         self.environment = {}
+        LOGGER.info("\t+ Building server environment")
         for key in self.config.environment:
             if key in os.environ:
                 self.environment[key] = os.environ[key]
             else:
                 LOGGER.warning(f"\t+ Environment variable {key} not found in the system")
 
-        LOGGER.info(f"\t+ Running {self.NAME} container")
+        LOGGER.info("\t+ Running server container")
         self.container = DOCKER.containers.run(
             image=self.config.image,
             ports=self.config.ports,
@@ -135,7 +135,7 @@ class InferenceServer(ABC):
             detach=True,
         )
 
-        LOGGER.info(f"\t+ Streaming {self.NAME} server logs")
+        LOGGER.info("\t+ Streaming server logs")
         for line in self.container.logs(stream=True):
             log = line.decode("utf-8").strip()
             log = styled_logs(log)
@@ -144,7 +144,7 @@ class InferenceServer(ABC):
                 LOGGER.info(f"\t+ {log}")
                 break
             elif self.FAILURE_SENTINEL.lower() in log.lower():
-                raise Exception(f"{self.NAME} server failed to start with failure message: {log}")
+                raise Exception(f"Server failed to start with failure message: {log}")
             else:
                 LOGGER.info(f"\t+ {log}")
 
@@ -158,18 +158,26 @@ class InferenceServer(ABC):
 
         self.semaphore = asyncio.Semaphore(self.config.max_concurrent_requests)
 
-        LOGGER.info(f"\t+ Waiting for {self.NAME} server to be ready")
         start_time = time.time()
-        while time.time() - start_time < self.config.timeout:
+        LOGGER.info("\t+ Trying to connect to server")
+        while time.time() - start_time < self.config.connection_timeout:
             try:
-                if not hasattr(self, "client"):
-                    self.client = AsyncInferenceClient(model=self.url)
-
-                asyncio.run(self.single_client_call(f"Hello {self.NAME}!"))
-                LOGGER.info(f"\t+ Connected to {self.NAME} server successfully")
+                self.client = AsyncInferenceClient(model=self.url)
+                LOGGER.info("\t+ Connected to server successfully")
                 break
             except Exception:
-                LOGGER.info(f"\t+ {self.NAME} server is not ready yet, waiting 1 second")
+                LOGGER.info("\t+ Failed to connect to server, waiting for 1 second and retrying")
+                time.sleep(1)
+
+        start_time = time.time()
+        LOGGER.info("\t+ Trying to run a first request")
+        while time.time() - start_time < self.config.first_request_timeout:
+            try:
+                asyncio.run(self.single_client_call("Hello server!"))
+                LOGGER.info("\t+ Ran first request successfully")
+                break
+            except Exception:
+                LOGGER.info("\t+ Failed to run first request, waiting for 1 second and retrying")
                 time.sleep(1)
 
     async def single_client_call(self, *args, **kwargs) -> Any:
