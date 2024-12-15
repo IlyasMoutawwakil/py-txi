@@ -44,7 +44,7 @@ class InferenceServerConfig:
         metadata={"help": "Dictionary of volumes to mount inside the container."},
     )
     environment: List[str] = field(
-        default_factory=lambda: ["HUGGINGFACE_HUB_TOKEN"],
+        default_factory=lambda: ["HF_TOKEN", "HF_API_TOKEN", "HF_HUB_TOKEN"],
         metadata={"help": "List of environment variables to forward to the container."},
     )
 
@@ -117,9 +117,8 @@ class InferenceServer(ABC):
         LOGGER.info("\t+ Building server environment")
         for key in self.config.environment:
             if key in os.environ:
+                LOGGER.info(f"\t+ Forwarding environment variable {key}")
                 self.environment[key] = os.environ[key]
-            else:
-                LOGGER.warning(f"\t+ Environment variable {key} not found in the system")
 
         LOGGER.info("\t+ Running server container")
         self.container = DOCKER.containers.run(
