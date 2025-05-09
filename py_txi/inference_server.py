@@ -56,6 +56,7 @@ class InferenceServerConfig:
         if self.ports["80/tcp"][1] == 0:
             LOGGER.info("\t+ Getting a free port for the server")
             self.ports["80/tcp"] = (self.ports["80/tcp"][0], get_free_port())
+            LOGGER.info(f"\t+ Using port {self.ports['80/tcp'][0]}:{self.ports['80/tcp'][1]} for the server")
 
         if self.shm_size is None:
             LOGGER.warning("\t+ Shared memory size not provided. Defaulting to '1g'.")

@@ -2,7 +2,7 @@ from py_txi.text_embedding_inference import TEI, TEIConfig
 from py_txi.text_generation_inference import TGI, TGIConfig
 
 for gpus in [None, "1", "1,2"]:
-    llm = TGI(config=TGIConfig(model_id="bigscience/bloom-560m", gpus=gpus))
+    llm = TGI(config=TGIConfig(model_id="gpt2", gpus=gpus))
     output = llm.generate(["Hi, I'm a language model", "I'm fine, how are you?"])
     print(len(output))
     print("LLM:", output)
