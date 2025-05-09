@@ -13,9 +13,9 @@ def test_cpu_tei():
 
 
 def test_cpu_tgi():
-    llm = TGI(config=TGIConfig(model_id="bigscience/bloom-560m"))
-    output = llm.generate("Hi, I'm a sanity test")
+    llm = TGI(config=TGIConfig(model_id="gpt2"))
+    output = llm.generate("Hi, I'm a sanity test", max_new_tokens=2)
     assert isinstance(output, str)
-    output = llm.generate(["Hi, I'm a sanity test", "I'm a second sentence"])
+    output = llm.generate(["Hi, I'm a sanity test", "I'm a second sentence"], max_new_tokens=2)
     assert isinstance(output, list) and all(isinstance(x, str) for x in output)
     llm.close()
