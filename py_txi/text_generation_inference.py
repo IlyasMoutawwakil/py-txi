@@ -39,8 +39,8 @@ class TGIConfig(InferenceServerConfig):
                 LOGGER.info("\t+ Using image version 3.2.3-rocm for Text-Generation-Inference")
                 self.image = "ghcr.io/huggingface/text-generation-inference:3.2.3-rocm"
             else:
-                LOGGER.info("\t+ Using image version 3.2.3-intel-cpu for Text-Generation-Inference")
-                self.image = "ghcr.io/huggingface/text-generation-inference:3.2.3-intel-cpu"
+                LOGGER.info("\t+ Using image version 3.3.4-intel-cpu for Text-Generation-Inference")
+                self.image = "ghcr.io/huggingface/text-generation-inference:3.3.4-intel-cpu"
 
 
 class TGI(InferenceServer):
