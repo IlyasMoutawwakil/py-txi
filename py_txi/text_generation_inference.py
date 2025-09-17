@@ -33,14 +33,14 @@ class TGIConfig(InferenceServerConfig):
 
         if self.image is None:
             if is_nvidia_system() and self.gpus is not None:
-                LOGGER.info("\t+ Using image version 3.3.4 for Text-Generation-Inference")
-                self.image = "ghcr.io/huggingface/text-generation-inference:3.3.4"
+                LOGGER.info("\t+ Using image version 3.3.6 for Text-Generation-Inference")
+                self.image = "ghcr.io/huggingface/text-generation-inference:3.3.6"
             elif is_rocm_system() and self.devices is not None:
-                LOGGER.info("\t+ Using image version 3.3.4-rocm for Text-Generation-Inference")
-                self.image = "ghcr.io/huggingface/text-generation-inference:3.3.4-rocm"
+                LOGGER.info("\t+ Using image version 3.3.6-rocm for Text-Generation-Inference")
+                self.image = "ghcr.io/huggingface/text-generation-inference:3.3.6-rocm"
             else:
-                LOGGER.info("\t+ Using image version 3.3.4-intel-cpu for Text-Generation-Inference")
-                self.image = "ghcr.io/huggingface/text-generation-inference:3.3.4-intel-cpu"
+                LOGGER.info("\t+ Using image version 3.3.6-intel-cpu for Text-Generation-Inference")
+                self.image = "ghcr.io/huggingface/text-generation-inference:3.3.6-intel-cpu"
 
 
 class TGI(InferenceServer):
