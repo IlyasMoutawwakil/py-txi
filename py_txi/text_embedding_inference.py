@@ -29,11 +29,11 @@ class TEIConfig(InferenceServerConfig):
 
         if self.image is None:
             if is_nvidia_system() and self.gpus is not None:
-                LOGGER.info("\t+ Using image version cuda-latest for Text-Embedding-Inference")
-                self.image = "ghcr.io/huggingface/text-embeddings-inference:cuda-latest"
+                LOGGER.info("\t+ Using image version cuda-1.8 for Text-Embedding-Inference")
+                self.image = "ghcr.io/huggingface/text-embeddings-inference:cuda-1.8"
             else:
-                LOGGER.info("\t+ Using image version cpu-1.4 for Text-Embedding-Inference")
-                self.image = "ghcr.io/huggingface/text-embeddings-inference:cpu-1.4"
+                LOGGER.info("\t+ Using image version cpu-1.8 for Text-Embedding-Inference")
+                self.image = "ghcr.io/huggingface/text-embeddings-inference:cpu-1.8"
 
         if is_nvidia_system() and "cpu" in self.image:
             LOGGER.warning("\t+ You are running on a NVIDIA GPU system but using a CPU image.")
@@ -46,7 +46,7 @@ class TEIConfig(InferenceServerConfig):
 class TEI(InferenceServer):
     NAME: str = "Text-Embedding-Inference"
     SUCCESS_SENTINEL: str = "Ready"
-    FAILURE_SENTINEL: str = "Error"
+    FAILURE_SENTINEL: str = "Error:"
 
     def __init__(self, config: TEIConfig) -> None:
         super().__init__(config)
