@@ -140,10 +140,10 @@ class InferenceServer(ABC):
             log = line.decode("utf-8").strip()
             log = styled_logs(log)
 
-            if self.SUCCESS_SENTINEL.lower() in log.lower():
+            if self.SUCCESS_SENTINEL.lower() in log:
                 LOGGER.info(f"\t+ {log}")
                 break
-            elif self.FAILURE_SENTINEL.lower() in log.lower():
+            elif self.FAILURE_SENTINEL.lower() in log:
                 raise Exception(f"Server failed to start with failure message: {log}")
             else:
                 LOGGER.info(f"\t+ {log}")
