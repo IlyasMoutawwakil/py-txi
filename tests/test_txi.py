@@ -4,7 +4,7 @@ from py_txi import TEI, TGI, TEIConfig, TGIConfig
 
 
 def test_cpu_tei():
-    embed = TEI(config=TEIConfig(model_id="bert-base-uncased"))
+    embed = TEI(config=TEIConfig(model_id="sentence-transformers/all-MiniLM-L6-v2"))
     output = embed.encode("Hi, I'm a language model")
     assert isinstance(output, np.ndarray)
     output = embed.encode(["Hi, I'm a language model", "I'm fine, how are you?"])
