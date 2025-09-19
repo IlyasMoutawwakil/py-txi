@@ -46,7 +46,7 @@ class TEIConfig(InferenceServerConfig):
 class TEI(InferenceServer):
     NAME: str = "Text-Embedding-Inference"
     SUCCESS_SENTINEL: str = "Ready"
-    FAILURE_SENTINEL: str = "Error"
+    FAILURE_SENTINEL: str = "Error:"
 
     def __init__(self, config: TEIConfig) -> None:
         super().__init__(config)
